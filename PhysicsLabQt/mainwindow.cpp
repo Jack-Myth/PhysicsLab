@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
     Splash::self=new Splash();
     Splash::self->show();
     UnrealCommunicatorServer.listen(QHostAddress::Any,10703);
-    ui->UnrealFrame->setAttribute(Qt::AA_NativeWindows);
+    ui->UnrealFrame->setAttribute(Qt::WA_NativeWindow);
     connect(&UnrealCommunicatorServer,&QTcpServer::newConnection,this,&MainWindow::OnUnrealConnected,Qt::UniqueConnection);
 }
 
@@ -80,13 +80,13 @@ void MainWindow::InvokeAction()
     QJsonDocument* JsonDocPtr=&MessageJson;
     QJsonObject MessageObj = MessageJson.object();
     QGenericArgument Jsonptr("JsonPtr",&JsonDocPtr);
-    this->metaObject()->invokeMethod(this,MessageObj.find("Action").value().toString(),Jsonptr);
+    this->metaObject()->invokeMethod(this,MessageObj.find("Action").value().toString().toStdString().c_str(),Jsonptr);
 }
 
 void MainWindow::SendHwnd(QJsonDocument *JsonPtr)
 {
     if(Splash::self)
         Splash::self->close();
-    HWND UnrealHwnd = (HWND)JsonPtr->object().find("Hwnd").value().toInt();
+    HWND UnrealHwnd = (HWND)JsonPtr->object().find("Hwnd").value().toString().toULong();
     SetParent(UnrealHwnd,(HWND)ui->UnrealFrame->winId());
 }
