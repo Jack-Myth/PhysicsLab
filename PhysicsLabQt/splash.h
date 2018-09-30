@@ -14,7 +14,7 @@ class Splash : public QDialog
 public:
     explicit Splash(QWidget *parent = 0);
     ~Splash();
-
+    static Splash* self;
 private:
     Ui::Splash *ui;
 };

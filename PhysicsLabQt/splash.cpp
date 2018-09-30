@@ -1,3 +1,4 @@
+#include "mainwindow.h"
 #include "splash.h"
 #include "ui_splash.h"
 
@@ -6,6 +7,7 @@ Splash::Splash(QWidget *parent) :
     ui(new Ui::Splash)
 {
     ui->setupUi(this);
+    pMainWindow=new MainWindow();
 }
 
 Splash::~Splash()

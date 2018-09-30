@@ -5,6 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui
+QT+= network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -26,12 +27,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    splash.cpp
+    splash.cpp \
+    unrealcommunicatorhelper.cpp
 
 HEADERS += \
         mainwindow.h \
-    splash.h
+    splash.h \
+    unrealcommunicatorhelper.h
 
 FORMS += \
         mainwindow.ui \
     splash.ui
+
+LIBS += -luser32
