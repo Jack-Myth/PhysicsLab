@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     Splash::self=new Splash();
     Splash::self->show();
+    CachedMessage.CachedMessageTargetSize=0;
     UnrealCommunicatorServer.listen(QHostAddress::Any,10703);
     ui->UnrealFrame->setAttribute(Qt::WA_NativeWindow);
     connect(&UnrealCommunicatorServer,&QTcpServer::newConnection,this,&MainWindow::OnUnrealConnected,Qt::UniqueConnection);
@@ -33,7 +34,7 @@ void MainWindow::OnUnrealConnected()
         QJsonObject JsonO;
         JsonO.insert("Action","RequestHwnd");
         JsonD.setObject(JsonO);
-        UnrealCommunicatorHelper::SendJson(UnrealCommunicator,JsonD.toBinaryData().data(),JsonD.toBinaryData().length());
+        UnrealCommunicatorHelper::SendJson(UnrealCommunicator,JsonD.toJson().data(),JsonD.toBinaryData().length());
     }
 }
 
@@ -72,21 +73,27 @@ void MainWindow::OnCommunicationMessageArrived()
 
 void MainWindow::InvokeAction()
 {
-    QJsonDocument MessageJson = QJsonDocument::fromBinaryData(QByteArray::fromRawData(
-                                                                  CachedMessage.CachedMessageData.data(),
-                                                                  CachedMessage.CachedMessageData.length()));
+    QJsonParseError ErrorMsg;
+    QString JsonStr=QString(CachedMessage.CachedMessageData.data());
+    QByteArray JsonData=JsonStr.toUtf8();
+    QJsonDocument MessageJson = QJsonDocument::fromJson(JsonData,&ErrorMsg);
+    if(ErrorMsg.error!=QJsonParseError::NoError)
+    {
+        qDebug()<<ErrorMsg.errorString();
+    }
     if (MessageJson.isNull())
         return;
-    QJsonDocument* JsonDocPtr=&MessageJson;
+    TargetMsg=&MessageJson;
     QJsonObject MessageObj = MessageJson.object();
-    QGenericArgument Jsonptr("JsonPtr",&JsonDocPtr);
-    this->metaObject()->invokeMethod(this,MessageObj.find("Action").value().toString().toStdString().c_str(),Jsonptr);
+    this->metaObject()->invokeMethod(this,MessageObj.find("Action").value().toString().toStdString().c_str());
 }
 
-void MainWindow::SendHwnd(QJsonDocument *JsonPtr)
+void MainWindow::SendHwnd()
 {
     if(Splash::self)
         Splash::self->close();
-    HWND UnrealHwnd = (HWND)JsonPtr->object().find("Hwnd").value().toString().toULong();
+    HWND UnrealHwnd = (HWND)TargetMsg->object().find("Hwnd").value().toString().toLongLong();
     SetParent(UnrealHwnd,(HWND)ui->UnrealFrame->winId());
+    SetWindowPos(UnrealHwnd,NULL,0,0,ui->UnrealFrame->size().width(),ui->UnrealFrame->size().height(),NULL);
+    this->show();
 }

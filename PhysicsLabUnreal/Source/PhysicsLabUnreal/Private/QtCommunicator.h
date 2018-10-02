@@ -3,19 +3,34 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
+#include "GameFramework/Actor.h"
 #include "QtCommunicator.generated.h"
+
+struct CachedMessageInfo
+{
+	TArray<char> CacheMessageData;
+	int CurrentLength;
+	int TargetLength;
+};
 
 /**
  * 
  */
 UCLASS()
-class UQtCommunicator : public UObject
+class AQtCommunicator : public AActor
 {
 	GENERATED_BODY()
 
 	class FSocket* QtCommunicator;
+	CachedMessageInfo CachedMessage;
+	FTimerHandle CommunicatorTimerHandler;
+	FJsonObject* TargetMsg=nullptr;
+	void InvokeAction();
+	void CheckPendingMsgData();
 public:
-	void TryConnect();
-	
+	UFUNCTION(BlueprintCallable)
+		void TryConnect();
+	void SendMsg(const TArray<char>& Data);
+	UFUNCTION()
+		void RequestHwnd();
 };

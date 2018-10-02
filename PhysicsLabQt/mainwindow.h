@@ -10,8 +10,8 @@ class MainWindow;
 struct CachedMessageInfo
 {
     QVector<char> CachedMessageData;
-    int CachedMessageCurrentSize;
-    int CachedMessageTargetSize;
+    int CachedMessageCurrentSize=0;
+    int CachedMessageTargetSize=0;
 };
 
 class MainWindow : public QMainWindow
@@ -19,6 +19,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
     QTcpServer UnrealCommunicatorServer;
     QTcpSocket* UnrealCommunicator=nullptr;
+    class QJsonDocument* TargetMsg;
     CachedMessageInfo CachedMessage;
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -32,7 +33,7 @@ private:
 
 private:
     //Action Function:
-    Q_INVOKABLE void SendHwnd(class QJsonDocument* JsonPtr);
+    Q_INVOKABLE void SendHwnd();
 };
 
 #endif // MAINWINDOW_H
