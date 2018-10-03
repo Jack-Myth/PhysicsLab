@@ -13,6 +13,7 @@
 #include "SWindow.h"
 #include "GenericWindow.h"
 #include "Engine/Engine.h"
+#include "d:/GitHub/UnrealEngine4.20/Engine/Source/Runtime/Engine/Classes/Kismet/KismetSystemLibrary.h"
 
 void AQtCommunicator::TryConnect()
 {
@@ -55,7 +56,11 @@ void AQtCommunicator::RequestHwnd()
 	}
 	DataCollection.Push(0);
 	SendMsg(DataCollection);
-	SWindow::GetPositionInScreen()
+}
+
+void AQtCommunicator::Quit()
+{
+	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit);
 }
 
 void AQtCommunicator::InvokeAction()

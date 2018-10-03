@@ -3,7 +3,14 @@
 #include "ui_mainwindow.h"
 #include "unrealcommunicatorhelper.h"
 #include <QtNetwork>
-#include <Windows.h>
+
+#define INIT_JSON_MSG(OBJECT) \
+    QJsonDocument __JsonO;\
+    QJsonObject OBJECT;
+#define SEND_JSON_MSG(OBJECT) \
+    __JsonO.setObject(OBJECT);\
+    UnrealCommunicatorHelper::SendJson(UnrealCommunicator,__JsonO.toJson().data(),__JsonO.toBinaryData().length());
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -16,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     UnrealCommunicatorServer.listen(QHostAddress::Any,10703);
     ui->UnrealFrame->setAttribute(Qt::WA_NativeWindow);
     connect(&UnrealCommunicatorServer,&QTcpServer::newConnection,this,&MainWindow::OnUnrealConnected,Qt::UniqueConnection);
+
 }
 
 MainWindow::~MainWindow()
@@ -92,8 +100,23 @@ void MainWindow::SendHwnd()
 {
     if(Splash::self)
         Splash::self->close();
-    HWND UnrealHwnd = (HWND)TargetMsg->object().find("Hwnd").value().toString().toLongLong();
+    UnrealHwnd = (HWND)TargetMsg->object().find("Hwnd").value().toString().toLongLong();
     SetParent(UnrealHwnd,(HWND)ui->UnrealFrame->winId());
     SetWindowPos(UnrealHwnd,NULL,0,0,ui->UnrealFrame->size().width(),ui->UnrealFrame->size().height(),NULL);
+    SetWindowLongPtr(UnrealHwnd,GWL_STYLE,GetWindowLongPtr(UnrealHwnd,GWL_STYLE)&(~(WS_POPUP|WS_CHILD)));
     this->show();
+}
+
+void MainWindow::moveEvent(QMoveEvent *event)
+{
+    QMainWindow::moveEvent(event);
+    SendMessage(UnrealHwnd,WM_MOVE,0,0);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    INIT_JSON_MSG(JsonO);
+    JsonO.insert("Action","Quit");
+    SEND_JSON_MSG(JsonO);
+    QMainWindow::closeEvent(event);
 }

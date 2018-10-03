@@ -1,0 +1,26 @@
+{
+	"FileVersion": 3,
+	"Version": 7,
+	"VersionName": "1.31.20",
+	"FriendlyName": "UE4Editor Customize",
+	"Description": "Change UE4Editor To a New Style.",
+	"Category": "Editor",
+	"CreatedBy": "JackMyth",
+	"CreatedByURL": "http://jackmyth.cn",
+	"DocsURL": "https://github.com/Jack-Myth/UE4EditorCustomize",
+	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/0d22d9af59624886a6fccd9573fefa90",
+	"SupportURL": "https://github.com/Jack-Myth/UE4EditorCustomize/issues",
+	"EngineVersion": "4.20.0",
+	"CanContainContent": true,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "UE4EditorCustomize",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
+		}
+	]
+}

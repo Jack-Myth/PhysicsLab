@@ -33,4 +33,6 @@ public:
 	void SendMsg(const TArray<char>& Data);
 	UFUNCTION()
 		void RequestHwnd();
+	UFUNCTION()
+		void Quit();
 };
