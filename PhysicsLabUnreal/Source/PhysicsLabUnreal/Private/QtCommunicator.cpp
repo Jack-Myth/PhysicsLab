@@ -13,7 +13,23 @@
 #include "SWindow.h"
 #include "GenericWindow.h"
 #include "Engine/Engine.h"
-#include "d:/GitHub/UnrealEngine4.20/Engine/Source/Runtime/Engine/Classes/Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
+
+WNDPROC AQtCommunicator::OriginalWndProc;
+
+LRESULT AQtCommunicator::ModifiedWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+	//Process WM_MOVE for child window
+	if (msg == WM_MOVE)
+	{
+		RECT rc;
+		GetWindowRect(hwnd, &rc);
+		short* plp = (short*)&lp;
+		*plp = (short)rc.left; //low
+		*(plp + 1) = (short)rc.top; //high
+	}
+	return OriginalWndProc(hwnd, msg, wp, lp);
+}
 
 void AQtCommunicator::TryConnect()
 {
@@ -40,6 +56,7 @@ void AQtCommunicator::SendMsg(const TArray<char>& Data)
 void AQtCommunicator::RequestHwnd()
 {
 	void* Hwnd = GEngine->GameViewport->GetWindow()->GetNativeWindow()->GetOSWindowHandle();
+	OriginalWndProc = (WNDPROC)SetWindowLongPtr((HWND)Hwnd, GWLP_WNDPROC, (LONG_PTR)&AQtCommunicator::ModifiedWndProc);
 	FJsonObject newJson;
 	newJson.SetStringField("Action", "SendHwnd");
 	newJson.SetStringField("Hwnd", FString::Printf(TEXT("%lld"), (long long)Hwnd));
@@ -60,6 +77,9 @@ void AQtCommunicator::RequestHwnd()
 
 void AQtCommunicator::Quit()
 {
+	//Reset WndProc
+	void* Hwnd = GEngine->GameViewport->GetWindow()->GetNativeWindow()->GetOSWindowHandle();
+	SetWindowLongPtr((HWND)Hwnd, GWLP_WNDPROC, (LONG_PTR)OriginalWndProc);
 	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit);
 }
 
@@ -105,3 +125,5 @@ void AQtCommunicator::CheckPendingMsgData()
 		}
 	}
 }
+
+

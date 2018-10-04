@@ -11,7 +11,6 @@
     __JsonO.setObject(OBJECT);\
     UnrealCommunicatorHelper::SendJson(UnrealCommunicator,__JsonO.toJson().data(),__JsonO.toBinaryData().length());
 
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -103,7 +102,6 @@ void MainWindow::SendHwnd()
     UnrealHwnd = (HWND)TargetMsg->object().find("Hwnd").value().toString().toLongLong();
     SetParent(UnrealHwnd,(HWND)ui->UnrealFrame->winId());
     SetWindowPos(UnrealHwnd,NULL,0,0,ui->UnrealFrame->size().width(),ui->UnrealFrame->size().height(),NULL);
-    SetWindowLongPtr(UnrealHwnd,GWL_STYLE,GetWindowLongPtr(UnrealHwnd,GWL_STYLE)&(~(WS_POPUP|WS_CHILD)));
     this->show();
 }
 

@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "AllowWindowsPlatformTypes.h"
+#include <windows.h>
 #include "QtCommunicator.generated.h"
 
 struct CachedMessageInfo
@@ -27,6 +29,8 @@ class AQtCommunicator : public AActor
 	FJsonObject* TargetMsg=nullptr;
 	void InvokeAction();
 	void CheckPendingMsgData();
+	static WNDPROC OriginalWndProc;
+	static LRESULT ModifiedWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 public:
 	UFUNCTION(BlueprintCallable)
 		void TryConnect();
