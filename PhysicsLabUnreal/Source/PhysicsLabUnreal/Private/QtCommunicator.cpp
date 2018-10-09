@@ -117,9 +117,9 @@ void AQtCommunicator::SyncActorDetails(AActor* TargetActor)
 		TransformProperty->SetObjectField("Location", LocationJson);
 		TransformProperty->SetObjectField("Rotation", RotationJson);
 		TransformProperty->SetObjectField("Scale", ScaleJson);
-		PropertyListJson->SetObjectField("__ActorTransform", TransformProperty);
+		ActorDetailJson.SetObjectField("ActorTransform", TransformProperty);
 	}
-	//Collect Other Property
+	//Property List
 	{
 		TMap<FString, FQtPropertyInfo> PropertyMap = IInteractable::Execute_CollectSyncableProperty(TargetActor);
 		for (auto it = PropertyMap.CreateConstIterator();it;++it)
@@ -127,7 +127,7 @@ void AQtCommunicator::SyncActorDetails(AActor* TargetActor)
 			TSharedPtr<FJsonObject> PropertyJson = MakeShareable(new FJsonObject());
 			PropertyJson->SetStringField("DisplayName", it->Value.DisplayName);
 			PropertyJson->SetStringField("Type", it->Value.Type);
-			PropertyJson->SetStringField("Value", it->Value.ValueStr);
+			PropertyJson->SetStringField("ValueStr", it->Value.ValueStr);
 			PropertyListJson->SetObjectField(it->Key, PropertyJson);
 		}
 	}
@@ -171,6 +171,8 @@ void AQtCommunicator::RequestHwnd()
 
 void AQtCommunicator::SelectActor()
 {
+	if (IsValid(SelectedActor))
+		IInteractable::Execute_OnActorDeselected(SelectedActor);
 	FString ActorName = TargetMsg->GetStringField("ActorName");
 	for (TActorIterator<AActor> ActorIt(GetWorld());ActorIt;++ActorIt)
 	{
@@ -181,6 +183,7 @@ void AQtCommunicator::SelectActor()
 		}
 	}
 	SyncActorDetails(SelectedActor);
+	IInteractable::Execute_OnActorSelected(SelectedActor);
 }
 
 void AQtCommunicator::Quit()

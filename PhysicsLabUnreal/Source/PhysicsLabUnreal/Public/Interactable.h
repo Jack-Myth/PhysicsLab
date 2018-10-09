@@ -34,11 +34,14 @@ class PHYSICSLABUNREAL_API IInteractable
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintNativeEvent)
-		void OnActorSelected();
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnActorSelected();
+	virtual void OnActorSelected_Implementation();
+
+	UFUNCTION(BlueprintImplementableEvent)
 		void OnActorDeselected();
+	virtual void OnActorDeselected_Implementation();
 
 	UFUNCTION(BlueprintNativeEvent)
 		TMap<FString,FQtPropertyInfo> CollectSyncableProperty();

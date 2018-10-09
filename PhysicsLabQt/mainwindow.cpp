@@ -2,7 +2,9 @@
 #include "splash.h"
 #include "ui_mainwindow.h"
 #include "unrealcommunicatorhelper.h"
+#include <QLabel>
 #include <QStandardItemModel>
+#include <QTextEdit>
 #include <QtNetwork>
 
 #define INIT_JSON_MSG(OBJECT) \
@@ -129,7 +131,54 @@ void MainWindow::SyncScene()
 
 void MainWindow::SyncActorDetails()
 {
-
+    ui->Details->clear();
+    if (!TargetMsg->object().find("ClearFlag").value().isNull())
+        return;
+    QJsonObject ActorTransform = TargetMsg->object().find("ActorTransform").value().toObject();
+    QJsonObject LocationJson = ActorTransform.find("Location").value().toObject();
+    QJsonObject RotationJson = ActorTransform.find("Rotation").value().toObject();
+    QJsonObject ScaleJson = ActorTransform.find("Scale").value().toObject();
+    QListWidgetItem* Location = new QListWidgetItem();
+    QListWidgetItem* Rotation = new QListWidgetItem();
+    QListWidgetItem* Scale = new QListWidgetItem();
+    ui->Details->addItem(Location);
+    ui->Details->addItem(Rotation);
+    ui->Details->addItem(Scale);
+    auto FillVec3Lambda=[=](QListWidgetItem* Item,QString ParamterName,QJsonObject JsonData)
+    {
+        QHBoxLayout* MainHorizontalBox = new QHBoxLayout();
+        QLabel* ParamterLabel= new QLabel();
+        ParamterLabel->setText(ParamterName);
+        MainHorizontalBox->addWidget(ParamterLabel);
+        QTextEdit* XValue = new QTextEdit();
+        XValue=JsonData.find("X").value().toString();
+        MainHorizontalBox->addWidget(XValue);
+        QTextEdit* YValue = new QTextEdit();
+        YValue=JsonData.find("Y").value().toString();
+        MainHorizontalBox->addWidget(YValue);
+        QTextEdit* ZValue = new QTextEdit();
+        ZValue=JsonData.find("Z").value().toString();
+        MainHorizontalBox->addWidget(ZValue);
+        ui->Details->setItemWidget(Item,MainHorizontalBox);
+    };
+    FillVec3Lambda(Location,"Location",LocationJson);
+    FillVec3Lambda(Rotation,"Rotation",RotationJson);
+    FillVec3Lambda(Scale,"Scale",ScaleJson);
+    QJsonObject Properties = TargetMsg->object().find("Properties").value().toObject();
+    for(QJsonValueRef PropertyJsonValue:Properties)
+    {
+        QHBoxLayout* MainHorizontalBox=new QHBoxLayout();
+        QListWidgetItem* PropertyListItem=new QListWidgetItem();
+        ui->Details->addItem(PropertyListItem);
+        QJsonObject PropertyObject = PropertyJsonValue.toObject();
+        QLabel* DisplayName= new QLabel();
+        DisplayName->setText(PropertyObject.find("DisplayName").value().toString());
+        MainHorizontalBox->addWidget(DisplayName);
+        QTextEdit* PropertyValue=new QTextEdit();
+        PropertyValue->setText(PropertyObject.find("ValueStr").value().toString());
+        MainHorizontalBox->addWidget(PropertyValue);
+        ui->Details->setItemWidget(PropertyListItem,MainHorizontalBox);
+    }
 }
 
 QTreeWidgetItem *MainWindow::Internal_SyncScene(QJsonObject ChildActor)
