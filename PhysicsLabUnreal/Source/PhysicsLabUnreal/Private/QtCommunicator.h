@@ -31,12 +31,21 @@ class AQtCommunicator : public AActor
 	void CheckPendingMsgData();
 	static WNDPROC OriginalWndProc;
 	static LRESULT ModifiedWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
+	AActor* SelectedActor=nullptr;
+	TSharedPtr<FJsonValue> Internal_CollectActorChild(AActor* TargetActor,TArray<AActor*>& SceneActorCollectionRef);
 public:
 	UFUNCTION(BlueprintCallable)
 		void TryConnect();
+	UFUNCTION(BlueprintCallable)
+		void SyncSceneToQt();
+	UFUNCTION(BlueprintCallable)
+		void SyncActorDetails(AActor* TargetActor);
 	void SendMsg(const TArray<char>& Data);
+	void SendJson(const FJsonObject& JsonToSend);
 	UFUNCTION()
 		void RequestHwnd();
+	UFUNCTION()
+		void SelectActor();
 	UFUNCTION()
 		void Quit();
 };

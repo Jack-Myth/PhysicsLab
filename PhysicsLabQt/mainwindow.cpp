@@ -87,6 +87,8 @@ void MainWindow::InvokeAction()
     if(ErrorMsg.error!=QJsonParseError::NoError)
     {
         qDebug()<<ErrorMsg.errorString();
+        qDebug()<<"Json:";
+        qDebug(CachedMessage.CachedMessageData.data());
     }
     if (MessageJson.isNull())
         return;
@@ -101,8 +103,48 @@ void MainWindow::SendHwnd()
         Splash::self->close();
     UnrealHwnd = (HWND)TargetMsg->object().find("Hwnd").value().toString().toLongLong();
     SetParent(UnrealHwnd,(HWND)ui->UnrealFrame->winId());
-    SetWindowPos(UnrealHwnd,NULL,0,0,ui->UnrealFrame->size().width(),ui->UnrealFrame->size().height(),NULL);
+    qDebug()<<ui->UnrealFrame->size().height();
     this->show();
+}
+
+void MainWindow::SyncScene()
+{
+    //ui->SceneTree->clear();
+    QJsonArray ActorList = TargetMsg->object().find("ActorList").value().toArray();
+    QList<QTreeWidgetItem*> WidgetItemList;
+    for(QJsonValueRef JsV:ActorList)
+    {
+        if(JsV.isObject())
+            WidgetItemList.append(Internal_SyncScene(JsV.toObject()));
+        else
+        {
+            QTreeWidgetItem* tmpT = new QTreeWidgetItem();
+            tmpT->setText(0,JsV.toString());
+            WidgetItemList.append(tmpT);
+        }
+    }
+    ui->SceneTree->addTopLevelItems(WidgetItemList);
+}
+
+QTreeWidgetItem *MainWindow::Internal_SyncScene(QJsonObject ChildActor)
+{
+    QString ParentName=ChildActor.keys()[0];
+    QTreeWidgetItem* TreeItem=new QTreeWidgetItem();
+    QList<QTreeWidgetItem*> ChildList;
+    QJsonArray ChildArray = ChildActor["ParentName"].toArray();
+    for(QJsonValueRef Child2Child:ChildArray)
+    {
+        if(Child2Child.isObject())
+            ChildList.append(Internal_SyncScene(Child2Child.toObject()));
+        else
+        {
+            QTreeWidgetItem* tmpT=new QTreeWidgetItem();
+            tmpT->setText(0,Child2Child.toString());
+            ChildList.append(tmpT);
+        }
+    }
+    TreeItem->addChildren(ChildList);
+    return TreeItem;
 }
 
 void MainWindow::moveEvent(QMoveEvent *event)
@@ -117,4 +159,16 @@ void MainWindow::closeEvent(QCloseEvent *event)
     JsonO.insert("Action","Quit");
     SEND_JSON_MSG(JsonO);
     QMainWindow::closeEvent(event);
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    SetWindowPos(UnrealHwnd,NULL,0,0,ui->UnrealFrame->size().width(),ui->UnrealFrame->size().height(),NULL);
+}
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    QMainWindow::showEvent(event);
+    SetWindowPos(UnrealHwnd,NULL,0,0,ui->UnrealFrame->size().width(),ui->UnrealFrame->size().height(),NULL);
 }

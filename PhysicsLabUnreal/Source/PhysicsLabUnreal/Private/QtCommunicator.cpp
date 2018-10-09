@@ -14,6 +14,9 @@
 #include "GenericWindow.h"
 #include "Engine/Engine.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include <stack>
+#include "EngineUtils.h"
 
 WNDPROC AQtCommunicator::OriginalWndProc;
 
@@ -31,6 +34,27 @@ LRESULT AQtCommunicator::ModifiedWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM 
 	return OriginalWndProc(hwnd, msg, wp, lp);
 }
 
+TSharedPtr<FJsonValue> AQtCommunicator::Internal_CollectActorChild(AActor* TargetActor, TArray<AActor*>& SceneActorCollectionRef)
+{
+	TArray<AActor*> ChildCollection;
+	TargetActor->GetAllChildActors(ChildCollection, false);
+	TSharedPtr<FJsonValue> TargetJsonValue;
+	if (ChildCollection.Num())
+	{
+		FJsonObject* Obj = new FJsonObject();
+		TArray<TSharedPtr<FJsonValue>> ChildList;
+		for (AActor*& CurActor:ChildCollection)
+			ChildList.Push(Internal_CollectActorChild(CurActor, SceneActorCollectionRef));
+		Obj->SetArrayField(TargetActor->GetName(), ChildList);
+
+		TargetJsonValue = MakeShareable(new FJsonValueObject(MakeShareable(Obj)));
+	}
+	else
+		TargetJsonValue = MakeShareable(new FJsonValueString(TargetActor->GetName()));
+	SceneActorCollectionRef.Remove(TargetActor);
+	return TargetJsonValue;
+}
+
 void AQtCommunicator::TryConnect()
 {
 	FTcpSocketBuilder tcpBuilder("Make Communication with QtClient");
@@ -40,6 +64,73 @@ void AQtCommunicator::TryConnect()
 	{
 		GetWorld()->GetTimerManager().SetTimer(CommunicatorTimerHandler, this, &AQtCommunicator::CheckPendingMsgData, 0.016f, true);
 	}
+}
+
+void AQtCommunicator::SyncSceneToQt()
+{
+	TArray<AActor*> ActorCollection;
+	FJsonObject ActorListJson;
+	UGameplayStatics::GetAllActorsOfClass(this, AActor::StaticClass(), ActorCollection);
+	ActorCollection.Remove(this); //Remove Communicator itself;
+	TArray<TSharedPtr<FJsonValue>> SceneActorList;
+	while (ActorCollection.Num())
+	{
+		if (!ActorCollection[0]->GetParentActor())
+			SceneActorList.Add(Internal_CollectActorChild(ActorCollection[0], ActorCollection));
+		else
+			ActorCollection.RemoveAt(0);
+	}
+	ActorListJson.SetStringField("Action", "SyncScene");
+	ActorListJson.SetArrayField("ActorList", SceneActorList);
+	SendJson(ActorListJson);
+}
+
+#define GEN_PROPERTY(PROPERTY_NAME,TYPE) \
+TSharedPtr<FJsonObject> PROPERTY_NAME = MakeShareable(new FJsonObject());\
+PROPERTY_NAME->SetStringField("Type", TYPE);
+void AQtCommunicator::SyncActorDetails(AActor* TargetActor)
+{
+	FJsonObject ActorDetailJson;
+	TSharedPtr<FJsonObject> PropertyListJson=MakeShareable(new FJsonObject());
+	for (TFieldIterator<UProperty> UPropertyIt(TargetActor->GetClass());UPropertyIt;++UPropertyIt)
+	{
+		if (UPropertyIt->HasAnyPropertyFlags(EPropertyFlags::CPF_BlueprintVisible))
+		{
+			if (UPropertyIt->GetCPPType()=="FString")
+			{
+				GEN_PROPERTY(StrProperty, "String");
+				StrProperty->SetStringField("Str", *Cast<UStructProperty>(*UPropertyIt)->ContainerPtrToValuePtr<FString>(TargetActor));
+				PropertyListJson->SetObjectField(UPropertyIt->GetName(), StrProperty);
+			}
+			else if (UPropertyIt->GetCPPType() == "FTransform")
+			{
+				FTransform* TransformValuePtr = Cast<UStructProperty>(*UPropertyIt)->ContainerPtrToValuePtr<FTransform>(TargetActor);
+				GEN_PROPERTY(TransformProperty, "Transform");
+				TSharedPtr<FJsonObject> LocationJson = MakeShareable(new FJsonObject());
+				TSharedPtr<FJsonObject> RotationJson = MakeShareable(new FJsonObject());
+				TSharedPtr<FJsonObject> ScaleJson = MakeShareable(new FJsonObject());
+				auto VectorLambda = [](TSharedPtr<FJsonObject>& JsonObj, float X, float Y, float Z)
+				{
+					JsonObj->SetStringField("X", FString::SanitizeFloat(X));
+					JsonObj->SetStringField("Y", FString::SanitizeFloat(Y));
+					JsonObj->SetStringField("Z", FString::SanitizeFloat(Z));
+				};
+				VectorLambda(LocationJson, TransformValuePtr->GetLocation().X,
+					TransformValuePtr->GetLocation().Y, TransformValuePtr->GetLocation().Z);
+				VectorLambda(RotationJson, TransformValuePtr->GetRotation().X,
+					TransformValuePtr->GetRotation().Y, TransformValuePtr->GetRotation().Z);
+				VectorLambda(ScaleJson, TransformValuePtr->GetScale3D().X,
+					TransformValuePtr->GetScale3D().Y, TransformValuePtr->GetScale3D().Z);
+				TransformProperty->SetObjectField("Location", LocationJson);
+				TransformProperty->SetObjectField("Rotation", RotationJson);
+				TransformProperty->SetObjectField("Scale", ScaleJson);
+				PropertyListJson->SetObjectField(UPropertyIt->GetName(), TransformProperty);
+			}
+		}
+	}
+	ActorDetailJson.SetStringField("Action", "SyncActorDetails");
+	ActorDetailJson.SetObjectField("Properties", PropertyListJson);
+	SendJson(ActorDetailJson);
 }
 
 void AQtCommunicator::SendMsg(const TArray<char>& Data)
@@ -53,6 +144,18 @@ void AQtCommunicator::SendMsg(const TArray<char>& Data)
 	QtCommunicator->Send((uint8*)TargetData.GetData(), TargetData.Num(), byteSent);
 }
 
+void AQtCommunicator::SendJson(const FJsonObject& JsonToSend)
+{
+	FString JsonStr;
+	auto JsonWriter = TJsonWriterFactory<TCHAR>::Create(&JsonStr, 0);
+	FJsonSerializer::Serialize(MakeShared<FJsonObject>(JsonToSend), JsonWriter);
+	TArray<char> DataCollection;
+	auto twoHundredAnsi = StringCast<ANSICHAR>(*JsonStr);
+	DataCollection.Append(twoHundredAnsi.Get(), twoHundredAnsi.Length());
+	DataCollection.Push(0);
+	SendMsg(DataCollection);
+}
+
 void AQtCommunicator::RequestHwnd()
 {
 	void* Hwnd = GEngine->GameViewport->GetWindow()->GetNativeWindow()->GetOSWindowHandle();
@@ -60,19 +163,21 @@ void AQtCommunicator::RequestHwnd()
 	FJsonObject newJson;
 	newJson.SetStringField("Action", "SendHwnd");
 	newJson.SetStringField("Hwnd", FString::Printf(TEXT("%lld"), (long long)Hwnd));
-	FString JsonStr;
-	auto JsonWriter = TJsonWriterFactory<TCHAR>::Create(&JsonStr, 0);
-	FJsonSerializer::Serialize(MakeShared<FJsonObject>(newJson), JsonWriter);
-	JsonStr = JsonStr.Replace(TEXT("\t"), TEXT(""));
-	TArray<char> DataCollection;
-	char* pC = TCHAR_TO_ANSI(*JsonStr);
-	while(*pC)
+	SendJson(newJson);
+}
+
+void AQtCommunicator::SelectActor()
+{
+	FString ActorName = TargetMsg->GetStringField("ActorName");
+	for (TActorIterator<AActor> ActorIt(GetWorld());ActorIt;++ActorIt)
 	{
-		DataCollection.Push(*pC);
-		pC++;
+		if ((*ActorIt)->GetName() == ActorName)
+		{
+			SelectedActor = *ActorIt;
+			break;
+		}
 	}
-	DataCollection.Push(0);
-	SendMsg(DataCollection);
+	
 }
 
 void AQtCommunicator::Quit()
