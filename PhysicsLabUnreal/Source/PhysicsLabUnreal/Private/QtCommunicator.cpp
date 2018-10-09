@@ -17,6 +17,7 @@
 #include "Kismet/GameplayStatics.h"
 #include <stack>
 #include "EngineUtils.h"
+#include "Interactable.h"
 
 WNDPROC AQtCommunicator::OriginalWndProc;
 
@@ -70,7 +71,7 @@ void AQtCommunicator::SyncSceneToQt()
 {
 	TArray<AActor*> ActorCollection;
 	FJsonObject ActorListJson;
-	UGameplayStatics::GetAllActorsOfClass(this, AActor::StaticClass(), ActorCollection);
+	UGameplayStatics::GetAllActorsWithInterface(this,UInteractable::StaticClass(),ActorCollection);
 	ActorCollection.Remove(this); //Remove Communicator itself;
 	TArray<TSharedPtr<FJsonValue>> SceneActorList;
 	while (ActorCollection.Num())
@@ -85,47 +86,49 @@ void AQtCommunicator::SyncSceneToQt()
 	SendJson(ActorListJson);
 }
 
-#define GEN_PROPERTY(PROPERTY_NAME,TYPE) \
+/*#define GEN_PROPERTY(PROPERTY_NAME,TYPE) \
 TSharedPtr<FJsonObject> PROPERTY_NAME = MakeShareable(new FJsonObject());\
-PROPERTY_NAME->SetStringField("Type", TYPE);
+PROPERTY_NAME->SetStringField("Type", TYPE);*/
 void AQtCommunicator::SyncActorDetails(AActor* TargetActor)
 {
+	if (!TargetActor->Implements<UInteractable>())
+		return;
 	FJsonObject ActorDetailJson;
 	TSharedPtr<FJsonObject> PropertyListJson=MakeShareable(new FJsonObject());
-	for (TFieldIterator<UProperty> UPropertyIt(TargetActor->GetClass());UPropertyIt;++UPropertyIt)
+	//Collect Actor Transform
 	{
-		if (UPropertyIt->HasAnyPropertyFlags(EPropertyFlags::CPF_BlueprintVisible))
+		TSharedPtr<FJsonObject> TransformProperty = MakeShareable(new FJsonObject());
+		FTransform TransformValue = TargetActor->GetActorTransform();
+		TSharedPtr<FJsonObject> LocationJson = MakeShareable(new FJsonObject());
+		TSharedPtr<FJsonObject> RotationJson = MakeShareable(new FJsonObject());
+		TSharedPtr<FJsonObject> ScaleJson = MakeShareable(new FJsonObject());
+		auto VectorLambda = [](TSharedPtr<FJsonObject>& JsonObj, float X, float Y, float Z)
 		{
-			if (UPropertyIt->GetCPPType()=="FString")
-			{
-				GEN_PROPERTY(StrProperty, "String");
-				StrProperty->SetStringField("Str", *Cast<UStructProperty>(*UPropertyIt)->ContainerPtrToValuePtr<FString>(TargetActor));
-				PropertyListJson->SetObjectField(UPropertyIt->GetName(), StrProperty);
-			}
-			else if (UPropertyIt->GetCPPType() == "FTransform")
-			{
-				FTransform* TransformValuePtr = Cast<UStructProperty>(*UPropertyIt)->ContainerPtrToValuePtr<FTransform>(TargetActor);
-				GEN_PROPERTY(TransformProperty, "Transform");
-				TSharedPtr<FJsonObject> LocationJson = MakeShareable(new FJsonObject());
-				TSharedPtr<FJsonObject> RotationJson = MakeShareable(new FJsonObject());
-				TSharedPtr<FJsonObject> ScaleJson = MakeShareable(new FJsonObject());
-				auto VectorLambda = [](TSharedPtr<FJsonObject>& JsonObj, float X, float Y, float Z)
-				{
-					JsonObj->SetStringField("X", FString::SanitizeFloat(X));
-					JsonObj->SetStringField("Y", FString::SanitizeFloat(Y));
-					JsonObj->SetStringField("Z", FString::SanitizeFloat(Z));
-				};
-				VectorLambda(LocationJson, TransformValuePtr->GetLocation().X,
-					TransformValuePtr->GetLocation().Y, TransformValuePtr->GetLocation().Z);
-				VectorLambda(RotationJson, TransformValuePtr->GetRotation().X,
-					TransformValuePtr->GetRotation().Y, TransformValuePtr->GetRotation().Z);
-				VectorLambda(ScaleJson, TransformValuePtr->GetScale3D().X,
-					TransformValuePtr->GetScale3D().Y, TransformValuePtr->GetScale3D().Z);
-				TransformProperty->SetObjectField("Location", LocationJson);
-				TransformProperty->SetObjectField("Rotation", RotationJson);
-				TransformProperty->SetObjectField("Scale", ScaleJson);
-				PropertyListJson->SetObjectField(UPropertyIt->GetName(), TransformProperty);
-			}
+			JsonObj->SetStringField("X", FString::SanitizeFloat(X));
+			JsonObj->SetStringField("Y", FString::SanitizeFloat(Y));
+			JsonObj->SetStringField("Z", FString::SanitizeFloat(Z));
+		};
+		VectorLambda(LocationJson, TransformValue.GetLocation().X,
+			TransformValue.GetLocation().Y, TransformValue.GetLocation().Z);
+		VectorLambda(RotationJson, TransformValue.GetRotation().X,
+			TransformValue.GetRotation().Y, TransformValue.GetRotation().Z);
+		VectorLambda(ScaleJson, TransformValue.GetScale3D().X,
+			TransformValue.GetScale3D().Y, TransformValue.GetScale3D().Z);
+		TransformProperty->SetObjectField("Location", LocationJson);
+		TransformProperty->SetObjectField("Rotation", RotationJson);
+		TransformProperty->SetObjectField("Scale", ScaleJson);
+		PropertyListJson->SetObjectField("__ActorTransform", TransformProperty);
+	}
+	//Collect Other Property
+	{
+		TMap<FString, FQtPropertyInfo> PropertyMap = IInteractable::Execute_CollectSyncableProperty(TargetActor);
+		for (auto it = PropertyMap.CreateConstIterator();it;++it)
+		{
+			TSharedPtr<FJsonObject> PropertyJson = MakeShareable(new FJsonObject());
+			PropertyJson->SetStringField("DisplayName", it->Value.DisplayName);
+			PropertyJson->SetStringField("Type", it->Value.Type);
+			PropertyJson->SetStringField("Value", it->Value.ValueStr);
+			PropertyListJson->SetObjectField(it->Key, PropertyJson);
 		}
 	}
 	ActorDetailJson.SetStringField("Action", "SyncActorDetails");
@@ -177,7 +180,7 @@ void AQtCommunicator::SelectActor()
 			break;
 		}
 	}
-	
+	SyncActorDetails(SelectedActor);
 }
 
 void AQtCommunicator::Quit()

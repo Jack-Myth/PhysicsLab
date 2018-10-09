@@ -2,6 +2,7 @@
 #include "splash.h"
 #include "ui_mainwindow.h"
 #include "unrealcommunicatorhelper.h"
+#include <QStandardItemModel>
 #include <QtNetwork>
 
 #define INIT_JSON_MSG(OBJECT) \
@@ -124,6 +125,11 @@ void MainWindow::SyncScene()
         }
     }
     ui->SceneTree->addTopLevelItems(WidgetItemList);
+}
+
+void MainWindow::SyncActorDetails()
+{
+
 }
 
 QTreeWidgetItem *MainWindow::Internal_SyncScene(QJsonObject ChildActor)

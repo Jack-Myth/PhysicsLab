@@ -35,6 +35,11 @@
         <height>16777215</height>
        </size>
       </property>
+      <column>
+       <property name="text">
+        <string notr="true">1</string>
+       </property>
+      </column>
      </widget>
     </item>
     <item>
@@ -60,20 +65,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QColumnView" name="Details">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>250</width>
-        <height>0</height>
-       </size>
-      </property>
-     </widget>
+     <widget class="QListWidget" name="Details"/>
     </item>
    </layout>
   </widget>

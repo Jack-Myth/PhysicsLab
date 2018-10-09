@@ -37,6 +37,7 @@ private:
     //Action Function:
     Q_INVOKABLE void SendHwnd();
     Q_INVOKABLE void SyncScene();
+    Q_INVOKABLE void SyncActorDetails();
     class QTreeWidgetItem* Internal_SyncScene(QJsonObject ChildActor);
     // QWidget interface
 protected:
