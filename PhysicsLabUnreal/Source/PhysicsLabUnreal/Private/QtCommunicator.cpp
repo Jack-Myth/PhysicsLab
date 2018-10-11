@@ -174,7 +174,7 @@ void AQtCommunicator::SelectActor()
 	if (IsValid(SelectedActor))
 		IInteractable::Execute_OnActorDeselected(SelectedActor);
 	FString ActorName = TargetMsg->GetStringField("ActorName");
-	for (TActorIterator<AActor> ActorIt(GetWorld());ActorIt;++ActorIt)
+	for (TActorIterator<AActor> ActorIt(GetWorld()); ActorIt; ++ActorIt)
 	{
 		if ((*ActorIt)->GetName() == ActorName)
 		{
@@ -182,7 +182,6 @@ void AQtCommunicator::SelectActor()
 			break;
 		}
 	}
-	SyncActorDetails(SelectedActor);
 	IInteractable::Execute_OnActorSelected(SelectedActor);
 }
 
