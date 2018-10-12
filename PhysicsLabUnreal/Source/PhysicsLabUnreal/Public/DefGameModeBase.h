@@ -18,6 +18,7 @@ class PHYSICSLABUNREAL_API ADefGameModeBase : public AGameModeBase
 		class AQtCommunicator* QtCommunicator=nullptr;
 	
 	class UStaticMeshComponent* ElecPole = nullptr;
+	TMap<class AActor*,TArray<class UStaticMeshComponent*>> CableLinkedMap;
 public:
 	UFUNCTION(BlueprintPure)
 		class AQtCommunicator* GetQtCommunicator();

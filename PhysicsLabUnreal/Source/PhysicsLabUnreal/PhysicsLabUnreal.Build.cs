@@ -8,7 +8,7 @@ public class PhysicsLabUnreal : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore","Sockets","Json", "Networking" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore","Sockets","Json", "Networking", "CableComponent" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

@@ -38,6 +38,7 @@ void ADragable::Tick(float DeltaTime)
 
 void ADragable::NotifyActorOnClicked(FKey ButtonPressed /*= EKeys::LeftMouseButton*/)
 {
+	Super::NotifyActorOnClicked(ButtonPressed);
 	if (ButtonPressed==EKeys::LeftMouseButton)
 	{
 		FHitResult HitR;
@@ -51,6 +52,7 @@ void ADragable::NotifyActorOnClicked(FKey ButtonPressed /*= EKeys::LeftMouseButt
 
 void ADragable::NotifyActorOnReleased(FKey ButtonReleased /*= EKeys::LeftMouseButton*/)
 {
+	Super::NotifyActorOnReleased(ButtonReleased);
 	if (ButtonReleased == EKeys::LeftMouseButton)
 		bIsDraging = false;
 }

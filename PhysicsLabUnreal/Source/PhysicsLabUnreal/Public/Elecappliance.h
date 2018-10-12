@@ -27,9 +27,13 @@ public:
 	AElecappliance();
 	
 	UFUNCTION()
-		void OnPositivePoleClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);
+		void OnPoleClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);
 	void LinkPole(class UStaticMeshComponent* InSelfActor, class UStaticMeshComponent* InOtherActor);
 	void BreakPole(class UStaticMeshComponent* InSelfActor, class UStaticMeshComponent* InOtherActor);
+	TArray<class USceneComponent*> DragExcludeComponent_Implementation() override;
+	FName FindPoleNameByComponent(class UStaticMeshComponent* PoleComponent);
+
 protected:
 	virtual void BeginPlay() override;
+
 };
