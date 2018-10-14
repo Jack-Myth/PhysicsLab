@@ -6,6 +6,68 @@
 #include "Materials/Material.h"
 #include "Kismet/GameplayStatics.h"
 #include "DefGameModeBase.h"
+#include "Battery.h"
+
+ABattery* AElecappliance::FindBattery()
+{
+	TMap<AElecappliance*, bool> IsSearched;
+	FElecLinkInfo StartSearchInfo;
+	StartSearchInfo.Elecappliance = this;
+	StartSearchInfo.ExitPole = PositiveP;
+	TArray<AElecappliance*> SearchMap;
+	ABattery* tmpBattery = Internal_FindBatery(StartSearchInfo,SearchMap);
+	if (tmpBattery)
+		return tmpBattery;
+	StartSearchInfo.ExitPole = NegativeP;
+	SearchMap.Empty();
+	return Internal_FindBatery(StartSearchInfo,SearchMap);
+}
+
+TArray<FElecLinkInfo> AElecappliance::Internal_GetNextLinks(class UStaticMeshComponent* TemplatePole)
+{
+	TArray<FElecLinkInfo> NextLinks;
+	AElecappliance* ElecAppliance = Cast<AElecappliance>(TemplatePole->GetOwner());
+	FElecLinkInfo thisLinkInfo;
+	thisLinkInfo.Elecappliance = Cast<AElecappliance>(TemplatePole->GetOwner());
+	thisLinkInfo.ExitPole = TemplatePole;
+	NextLinks.Add(thisLinkInfo);
+	const TArray<UStaticMeshComponent*> Connections = thisLinkInfo.Elecappliance->GetPoleConenction(TemplatePole);
+	for (UStaticMeshComponent*const& NextPole:Connections)
+	{
+		if (NextPole->GetOwner()!=thisLinkInfo.Elecappliance)
+			NextLinks.Append(Internal_GetNextLinks(NextPole));
+	}
+	return NextLinks;
+}
+
+ABattery* AElecappliance::Internal_FindBatery(const FElecLinkInfo& SearchBegin, TArray<AElecappliance*>& SearchMap)
+{
+	if (SearchBegin.Elecappliance&&SearchMap.Find(SearchBegin.Elecappliance)==INDEX_NONE)
+	{
+		SearchMap.Add(SearchBegin.Elecappliance);
+		const TArray<UStaticMeshComponent*>& SearchNext = SearchBegin.Elecappliance->GetPoleConenction(SearchBegin.ExitPole);
+		for (UStaticMeshComponent* const& NextPoleComponent : SearchNext)
+		{
+			if (NextPoleComponent->GetOwner()->GetClass() == ABattery::StaticClass())
+				return Cast<ABattery>(NextPoleComponent->GetOwner());
+			else
+			{
+				FElecLinkInfo Nextlink;
+				Nextlink.Elecappliance = Cast<AElecappliance>(NextPoleComponent->GetOwner());
+				Nextlink.ExitPole = NextPoleComponent;
+				Nextlink.ExitPole = Nextlink.Elecappliance->PositiveP;
+				ABattery* Searchresult = Internal_FindBatery(Nextlink, SearchMap);
+				if (Searchresult)
+					return Searchresult;
+				Nextlink.ExitPole = Nextlink.Elecappliance->NegativeP;
+				Searchresult = Internal_FindBatery(Nextlink,SearchMap);
+				if (Searchresult)
+					return Searchresult;
+			}
+		}
+	}
+	return nullptr;
+}
 
 AElecappliance::AElecappliance()
 {
@@ -54,6 +116,31 @@ FName AElecappliance::FindPoleNameByComponent(class UStaticMeshComponent* PoleCo
 		return "NegativeP";
 	else
 		return "None";
+}
+
+void AElecappliance::UpdateElecState()
+{
+	
+}
+
+TArray<FElecLinkInfo> AElecappliance::GetNextLinksStatic(class UStaticMeshComponent* TemplatePole)
+{
+	AElecappliance* ElecapplianceOwner = Cast<AElecappliance>(TemplatePole->GetOwner());
+	if (!ElecapplianceOwner)
+		return TArray<FElecLinkInfo>();
+	return ElecapplianceOwner->GetNextLinks(TemplatePole);
+}
+
+TArray<FElecLinkInfo> AElecappliance::GetNextLinks(class UStaticMeshComponent* TemplatePole)
+{
+	TArray<FElecLinkInfo> NextLinks;
+	const TArray<UStaticMeshComponent*> Connections = GetPoleConenction(TemplatePole);
+	for (UStaticMeshComponent* const& NextPole : Connections)
+	{
+		if (NextPole->GetOwner() != this)
+			NextLinks.Append(Internal_GetNextLinks(NextPole));
+	}
+	return NextLinks;
 }
 
 void AElecappliance::BeginPlay()
