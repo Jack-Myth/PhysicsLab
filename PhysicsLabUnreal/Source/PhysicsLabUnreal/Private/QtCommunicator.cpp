@@ -95,30 +95,6 @@ void AQtCommunicator::SyncActorDetails(AActor* TargetActor)
 		return;
 	FJsonObject ActorDetailJson;
 	TSharedPtr<FJsonObject> PropertyListJson=MakeShareable(new FJsonObject());
-	//Collect Actor Transform
-	{
-		TSharedPtr<FJsonObject> TransformProperty = MakeShareable(new FJsonObject());
-		FTransform TransformValue = TargetActor->GetActorTransform();
-		TSharedPtr<FJsonObject> LocationJson = MakeShareable(new FJsonObject());
-		TSharedPtr<FJsonObject> RotationJson = MakeShareable(new FJsonObject());
-		TSharedPtr<FJsonObject> ScaleJson = MakeShareable(new FJsonObject());
-		auto VectorLambda = [](TSharedPtr<FJsonObject>& JsonObj, float X, float Y, float Z)
-		{
-			JsonObj->SetStringField("X", FString::SanitizeFloat(X));
-			JsonObj->SetStringField("Y", FString::SanitizeFloat(Y));
-			JsonObj->SetStringField("Z", FString::SanitizeFloat(Z));
-		};
-		VectorLambda(LocationJson, TransformValue.GetLocation().X,
-			TransformValue.GetLocation().Y, TransformValue.GetLocation().Z);
-		VectorLambda(RotationJson, TransformValue.GetRotation().X,
-			TransformValue.GetRotation().Y, TransformValue.GetRotation().Z);
-		VectorLambda(ScaleJson, TransformValue.GetScale3D().X,
-			TransformValue.GetScale3D().Y, TransformValue.GetScale3D().Z);
-		TransformProperty->SetObjectField("Location", LocationJson);
-		TransformProperty->SetObjectField("Rotation", RotationJson);
-		TransformProperty->SetObjectField("Scale", ScaleJson);
-		ActorDetailJson.SetObjectField("ActorTransform", TransformProperty);
-	}
 	//Property List
 	{
 		TMap<FString, FQtPropertyInfo> PropertyMap = IInteractable::Execute_CollectSyncableProperty(TargetActor);
@@ -126,8 +102,21 @@ void AQtCommunicator::SyncActorDetails(AActor* TargetActor)
 		{
 			TSharedPtr<FJsonObject> PropertyJson = MakeShareable(new FJsonObject());
 			PropertyJson->SetStringField("DisplayName", it->Value.DisplayName);
-			PropertyJson->SetStringField("Type", it->Value.Type);
-			PropertyJson->SetStringField("ValueStr", it->Value.ValueStr);
+			switch (it->Value.Type)
+			{
+				case EQtPropertyType::QPT_Float:
+					PropertyJson->SetStringField("Type", "Float");
+					PropertyJson->SetNumberField("Value", FCString::Atof(*(it->Value.ValueStr)));
+					break;
+				case EQtPropertyType::QPT_String:
+					PropertyJson->SetStringField("Type", "String");
+					PropertyJson->SetStringField("Value",it->Value.ValueStr);
+					break;
+				case EQtPropertyType::QPT_UserDefined:
+					PropertyJson->SetStringField("Type", "UserDefined");
+					PropertyJson->SetStringField("Value", it->Value.ValueStr);
+					break;
+			}
 			PropertyListJson->SetObjectField(it->Key, PropertyJson);
 		}
 	}
@@ -172,17 +161,19 @@ void AQtCommunicator::RequestHwnd()
 void AQtCommunicator::SelectActor()
 {
 	if (IsValid(SelectedActor))
-		IInteractable::Execute_OnActorDeselected(SelectedActor);
+		IInteractable::Execute_OnActorDeselected(SelectedActor,SelectedActor,this);
 	FString ActorName = TargetMsg->GetStringField("ActorName");
-	for (TActorIterator<AActor> ActorIt(GetWorld()); ActorIt; ++ActorIt)
+	TArray<AActor*> InteractableActors;
+	UGameplayStatics::GetAllActorsWithInterface(this, UInteractable::StaticClass(), InteractableActors);
+	for (AActor*& InteractableActor:InteractableActors)
 	{
-		if ((*ActorIt)->GetName() == ActorName)
+		if (InteractableActor->GetName() == ActorName)
 		{
-			SelectedActor = *ActorIt;
+			SelectedActor = InteractableActor;
 			break;
 		}
 	}
-	IInteractable::Execute_OnActorSelected(SelectedActor);
+	IInteractable::Execute_OnActorSelected(SelectedActor, SelectedActor,this);
 }
 
 void AQtCommunicator::Quit()
@@ -191,6 +182,11 @@ void AQtCommunicator::Quit()
 	void* Hwnd = GEngine->GameViewport->GetWindow()->GetNativeWindow()->GetOSWindowHandle();
 	SetWindowLongPtr((HWND)Hwnd, GWLP_WNDPROC, (LONG_PTR)OriginalWndProc);
 	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit);
+}
+
+void AQtCommunicator::RequestRefresh()
+{
+	SyncSceneToQt();
 }
 
 void AQtCommunicator::InvokeAction()

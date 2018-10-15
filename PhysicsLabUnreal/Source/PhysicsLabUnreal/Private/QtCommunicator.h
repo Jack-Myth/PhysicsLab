@@ -42,10 +42,14 @@ public:
 		void SyncActorDetails(AActor* TargetActor);
 	void SendMsg(const TArray<char>& Data);
 	void SendJson(const FJsonObject& JsonToSend);
+
+	//Communicate Action
 	UFUNCTION()
 		void RequestHwnd();
 	UFUNCTION()
 		void SelectActor();
 	UFUNCTION()
 		void Quit();
+	UFUNCTION()
+		void RequestRefresh();
 };

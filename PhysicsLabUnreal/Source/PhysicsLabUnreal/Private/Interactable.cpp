@@ -8,23 +8,21 @@
 
 // Add default functionality here for any IInteractable functions that are not pure virtual.
 
-void IInteractable::OnActorSelected_Implementation()
+void IInteractable::OnActorSelected_Implementation(UObject* ObjBasePtr, AQtCommunicator* QtCommunicatorC)
 {
-	TArray<AActor*> QtCommunicatorC;
-	UGameplayStatics::GetAllActorsOfClass((AActor*)this, AQtCommunicator::StaticClass(),QtCommunicatorC);
-	if (!QtCommunicatorC.Num())
+	if (!IsValid(QtCommunicatorC))
 		return;
-	((AQtCommunicator*)QtCommunicatorC[0])->SyncActorDetails((AActor*)this);
-	TArray<UActorComponent*> StaticMeshComponents = ((AActor*)this)->GetComponentsByClass(UStaticMeshComponent::StaticClass());
+	QtCommunicatorC->SyncActorDetails(Cast<AActor>(ObjBasePtr));
+	TArray<UActorComponent*> StaticMeshComponents = Cast<AActor>(ObjBasePtr)->GetComponentsByClass(UStaticMeshComponent::StaticClass());
 	for (UActorComponent*& StaticMeshComponent:StaticMeshComponents)
 	{
 		((UStaticMeshComponent*)StaticMeshComponent)->bRenderCustomDepth = true;
 	}
 }
 
-void IInteractable::OnActorDeselected_Implementation()
+void IInteractable::OnActorDeselected_Implementation(UObject* ObjBasePtr, AQtCommunicator* QtCommunicatorC)
 {
-	TArray<UActorComponent*> StaticMeshComponents = ((AActor*)this)->GetComponentsByClass(UStaticMeshComponent::StaticClass());
+	TArray<UActorComponent*> StaticMeshComponents = Cast<AActor>(ObjBasePtr)->GetComponentsByClass(UStaticMeshComponent::StaticClass());
 	for (UActorComponent*& StaticMeshComponent : StaticMeshComponents)
 	{
 		((UStaticMeshComponent*)StaticMeshComponent)->bRenderCustomDepth = false;

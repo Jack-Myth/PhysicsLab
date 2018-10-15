@@ -36,4 +36,5 @@ void ABattery::Electrify_Implementation(float Voltage)
 	{
 		Internal_Electrify(NextLink, ElecPaths, SearchMap);
 	}
+	//TODO: Gen ElecTree
 }

@@ -52,6 +52,8 @@ protected:
     // QWidget interface
 protected:
     void showEvent(QShowEvent *event);
+private slots:
+    void on_SceneTree_itemClicked(QTreeWidgetItem *item, int column);
 };
 
 #endif // MAINWINDOW_H

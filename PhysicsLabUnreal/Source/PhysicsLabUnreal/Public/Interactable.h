@@ -6,15 +6,24 @@
 #include "UObject/Interface.h"
 #include "Interactable.generated.h"
 
+UENUM(BlueprintType)
+enum class EQtPropertyType :uint8
+{
+	QPT_Float	UMETA(DisplayName="Float"),
+	QPT_String	UMETA(DisplayName="String"),
+	QPT_UserDefined	UMETA(DisplayName = "UserDefined"),
+	QPT_Unknow	UMETA(Hidden)
+};
+
 USTRUCT(BlueprintType)
 struct FQtPropertyInfo
 {
 	GENERATED_BODY()
 
-		UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite)
 		FString DisplayName;
 	UPROPERTY(BlueprintReadWrite)
-		FString Type;
+		EQtPropertyType Type;
 	UPROPERTY(BlueprintReadWrite)
 		FString ValueStr;
 };
@@ -35,13 +44,13 @@ class PHYSICSLABUNREAL_API IInteractable
 
 public:
 
-	UFUNCTION(BlueprintImplementableEvent)
-		void OnActorSelected();
-	virtual void OnActorSelected_Implementation();
+	UFUNCTION(BlueprintNativeEvent)
+		void OnActorSelected(UObject* ObjBasePtr, AQtCommunicator* QtCommunicatorC);
+	virtual void OnActorSelected_Implementation(UObject* ObjBasePtr, AQtCommunicator* QtCommunicatorC);
 
-	UFUNCTION(BlueprintImplementableEvent)
-		void OnActorDeselected();
-	virtual void OnActorDeselected_Implementation();
+	UFUNCTION(BlueprintNativeEvent)
+		void OnActorDeselected(UObject* ObjBasePtr, AQtCommunicator* QtCommunicatorC);
+	virtual void OnActorDeselected_Implementation(UObject* ObjBasePtr, AQtCommunicator* QtCommunicatorC);
 
 	UFUNCTION(BlueprintNativeEvent)
 		TMap<FString,FQtPropertyInfo> CollectSyncableProperty();
