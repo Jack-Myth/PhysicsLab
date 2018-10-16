@@ -189,6 +189,24 @@ void AQtCommunicator::RequestRefresh()
 	SyncSceneToQt();
 }
 
+void AQtCommunicator::SendActorDetail()
+{
+	FString PropertyName = TargetMsg->GetStringField("Name");
+	FString PropertyType = TargetMsg->GetStringField("Type");
+	if (PropertyType=="Float")
+	{
+		double Value = TargetMsg->GetNumberField("Value");
+		if (SelectedActor)
+			IInteractable::Execute_OnPropertyValueChanged(SelectedActor, PropertyName, FString::SanitizeFloat(Value));
+	}
+	else
+	{
+		FString Value = TargetMsg->GetStringField("Value");
+		if (SelectedActor)
+			IInteractable::Execute_OnPropertyValueChanged(SelectedActor, PropertyName, Value);
+	}
+}
+
 void AQtCommunicator::InvokeAction()
 {
 	auto JsonReader = TJsonReaderFactory<TCHAR>::Create(FString(CachedMessage.CacheMessageData.GetData()));

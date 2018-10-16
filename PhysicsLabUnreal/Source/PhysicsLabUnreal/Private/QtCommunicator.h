@@ -52,4 +52,6 @@ public:
 		void Quit();
 	UFUNCTION()
 		void RequestRefresh();
+	UFUNCTION()
+		void SendActorDetail();
 };

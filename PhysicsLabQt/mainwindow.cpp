@@ -4,6 +4,7 @@
 #include "unrealcommunicatorhelper.h"
 #include <QDoubleSpinBox>
 #include <QLabel>
+#include <QLineEdit>
 #include <QStandardItemModel>
 #include <QTextEdit>
 #include <QtNetwork>
@@ -100,6 +101,16 @@ void MainWindow::InvokeAction()
     this->metaObject()->invokeMethod(this,MessageObj.find("Action").value().toString().toStdString().c_str());
 }
 
+void MainWindow::SendActorDetail(QString PropertyName, QString PropertyType, const QJsonValue& PropertyValue)
+{
+    INIT_JSON_MSG(JsonO);
+    JsonO.insert("Action","SendActorDetail");
+    JsonO.insert("Name",PropertyName);
+    JsonO.insert("Type",PropertyType);
+    JsonO.insert("Value",PropertyValue);
+    SEND_JSON_MSG(JsonO);
+}
+
 void MainWindow::SendHwnd()
 {
     if(Splash::self)
@@ -134,7 +145,7 @@ void MainWindow::SyncActorDetails()
 {
     ui->Details->clear();
     QJsonObject Properties = TargetMsg->object().find("Properties").value().toObject();
-    for(QJsonValueRef PropertyJsonValue:Properties)
+    for(auto it = Properties.begin();it!=Properties.end();++it)
     {
         QHBoxLayout* MainHorizontalBox=new QHBoxLayout();
         QListWidgetItem* PropertyListItem=new QListWidgetItem();
@@ -142,15 +153,31 @@ void MainWindow::SyncActorDetails()
         ItemSizeHint.setHeight(50);
         PropertyListItem->setSizeHint(ItemSizeHint);
         ui->Details->addItem(PropertyListItem);
-        QJsonObject PropertyObject = PropertyJsonValue.toObject();
+        QJsonObject PropertyObject = it.value().toObject();
+        QString PropertyName=it.key();
         QLabel* DisplayName= new QLabel();
         DisplayName->setText(PropertyObject.find("DisplayName").value().toString());
         MainHorizontalBox->addWidget(DisplayName);
-        if(PropertyObject.find("Type").value().toString()=="Float")
+        QString PropertyType=PropertyObject.find("Type").value().toString();
+        if(PropertyType=="Float")
         {
             QDoubleSpinBox* PropertyValue=new QDoubleSpinBox();
-            //connect(PropertyValue,&QTextEdit::textChanged)
-            PropertyValue->setValue(PropertyObject.find("ValueStr").value().toDouble());
+            PropertyValue->setValue(PropertyObject.find("Value").value().toDouble());
+            void (QDoubleSpinBox::*pf)(double)=&QDoubleSpinBox::valueChanged;
+            connect(PropertyValue,pf,this,[=](double Value)
+            {
+                SendActorDetail(PropertyName,"Float",QJsonValue(Value));
+            },Qt::UniqueConnection);
+            MainHorizontalBox->addWidget(PropertyValue);
+        }
+        else
+        {
+            QLineEdit* PropertyValue=new QLineEdit();
+            PropertyValue->setText(PropertyObject.find("Value").value().toString());
+            connect(PropertyValue,&QLineEdit::editingFinished,this,[=]()
+            {
+                SendActorDetail(PropertyName,PropertyType,QJsonValue(PropertyValue->text()));
+            },Qt::UniqueConnection);
             MainHorizontalBox->addWidget(PropertyValue);
         }
         QWidget* x=new QWidget();
@@ -208,6 +235,7 @@ void MainWindow::showEvent(QShowEvent *event)
 
 void MainWindow::on_SceneTree_itemClicked(QTreeWidgetItem *item, int column)
 {
+    (void)column;
     INIT_JSON_MSG(JsonO);
     JsonO.insert("Action","SelectActor");
     JsonO.insert("ActorName",item->text(0));

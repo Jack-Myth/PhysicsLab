@@ -32,6 +32,7 @@ private:
     void OnUnrealConnected();
     void OnCommunicationMessageArrived();
     void InvokeAction();
+    void SendActorDetail(QString PropertyName,QString PropertyType,const QJsonValue& PropertyValue);
 
 private:
     //Action Function:
@@ -39,6 +40,7 @@ private:
     Q_INVOKABLE void SyncScene();
     Q_INVOKABLE void SyncActorDetails();
     class QTreeWidgetItem* Internal_SyncScene(QJsonObject ChildActor);
+
     // QWidget interface
 protected:
     virtual void moveEvent(QMoveEvent *event) override;
