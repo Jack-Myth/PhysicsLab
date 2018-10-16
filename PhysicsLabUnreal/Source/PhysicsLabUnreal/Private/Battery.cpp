@@ -85,8 +85,19 @@ void ABattery::Electrify_Implementation(float Voltage)
 	}
 	//TODO: Gen ElecTree
 	FElecTree ElecRootTree;
-	Internal_GenElecTreeSeries(ElecPaths, &ElecRootTree);
+	Internal_GenElecTreeSeries(ElecPaths,ElecPaths[0].ElecPath.Num(), &ElecRootTree);
 	
+}
+
+TMap<FString, FQtPropertyInfo> ABattery::CollectSyncableProperty_Implementation()
+{
+	TMap<FString, FQtPropertyInfo> SuperReturn = AElecappliance::CollectSyncableProperty_Implementation();
+	FQtPropertyInfo tmpPropertyInfo;
+	tmpPropertyInfo.DisplayName = "Voltage";
+	tmpPropertyInfo.Type = EQtPropertyType::QPT_Float;
+	tmpPropertyInfo.ValueStr = FString::SanitizeFloat(Voltage);
+	SuperReturn.Add("Voltage") = tmpPropertyInfo;
+	return SuperReturn;
 }
 
 void ABattery::FElecPath::GenCommonFlag(TArray<FElecPath>& ElecPaths)

@@ -68,6 +68,9 @@ public:
 	
 	//Battery will use It own Voltage instead of the Voltage parameter
 	virtual void Electrify_Implementation(float Voltage) override;
-	UPROPERTY(VisiableAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		float Voltage;
+
+	virtual TMap<FString, FQtPropertyInfo> CollectSyncableProperty_Implementation() override;
+
 };
