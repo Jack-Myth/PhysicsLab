@@ -26,7 +26,25 @@ class PHYSICSLABUNREAL_API ABattery : public AElecappliance
 {
 	GENERATED_BODY()
 
-	void Internal_Electrify(FElecLinkInfo BeginSearch, TArray<TArray<AElecappliance*>>& ElecPaths, TArray<AElecappliance*>& SearchMap);
+	struct FElecPath
+	{
+		TArray<AElecappliance*> ElecPath;
+		int CurIndex=0;
+		TArray<int> PinCollection;
+		void PushPin()
+		{PinCollection.Push(CurIndex);}
+		int PeekLastPin()
+		{return PinCollection.Last();}
+		void PopPin()
+		{CurIndex = PinCollection.Pop();}
+		void Next()
+		{CurIndex++;}
+		void Prev()
+		{ CurIndex--;}
+		AElecappliance* GetCurrent()
+		{return ElecPath[CurIndex];}
+	};
+	void Internal_Electrify(FElecLinkInfo BeginSearch, TArray<FElecPath>& ElecPaths, FElecPath& SearchMap);
 	void Internal_GenElecTree();
 public:
 	

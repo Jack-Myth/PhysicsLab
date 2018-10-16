@@ -2,11 +2,11 @@
 
 #include "Battery.h"
 
-void ABattery::Internal_Electrify(FElecLinkInfo BeginSearch, TArray<TArray<AElecappliance*>>& ElecPaths,TArray<AElecappliance*>& SearchMap)
+void ABattery::Internal_Electrify(FElecLinkInfo BeginSearch, TArray<FElecPath>& ElecPaths, FElecPath& SearchMap)
 {
-	if (SearchMap.Find(BeginSearch.Elecappliance) != INDEX_NONE)
+	if (SearchMap.ElecPath.Find(BeginSearch.Elecappliance) != INDEX_NONE)
 		return;
-	SearchMap.Push(BeginSearch.Elecappliance);
+	SearchMap.ElecPath.Push(BeginSearch.Elecappliance);
 	TArray<FElecLinkInfo> nextLinks = BeginSearch.Elecappliance->GetNextLinks(BeginSearch.ExitPole);
 	for (FElecLinkInfo& NextLink : nextLinks)
 	{
@@ -14,23 +14,23 @@ void ABattery::Internal_Electrify(FElecLinkInfo BeginSearch, TArray<TArray<AElec
 		{
 			if (NextLink.ExitPole != NegativeP)
 			{
-				SearchMap.Push(this);
+				SearchMap.ElecPath.Push(this);
 				ElecPaths.Add(SearchMap);
-				SearchMap.Pop();
+				SearchMap.ElecPath.Pop();
 			}
 			continue;
 		}
 		Internal_Electrify(NextLink,ElecPaths, SearchMap);
 	}
-	SearchMap.Pop();
+	SearchMap.ElecPath.Pop();
 }
 
 void ABattery::Electrify_Implementation(float Voltage)
 {
-	TArray<AElecappliance*> SearchMap;
-	TArray<TArray<AElecappliance*>> ElecPaths;
+	FElecPath SearchMap;
+	TArray<FElecPath> ElecPaths;
 	//Battery will be the first Elecappliance
-	SearchMap.Push(this);
+	SearchMap.ElecPath.Push(this);
 	TArray<FElecLinkInfo> nextLinks = GetNextLinks(PositiveP);
 	for (FElecLinkInfo& NextLink:nextLinks)
 	{
