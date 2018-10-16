@@ -61,6 +61,10 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 		void Electrify(float Voltage);
 	virtual void Electrify_Implementation(float Voltage) {};
+
+	UPROPERTY(VisibleAnywhere)
+		float Resistance;
+	TMap<FString, FQtPropertyInfo> CollectSyncableProperty_Implementation() override;
 protected:
 	virtual void BeginPlay() override;
 };

@@ -23,6 +23,17 @@ ABattery* AElecappliance::FindBattery()
 	return Internal_FindBatery(StartSearchInfo,SearchMap);
 }
 
+TMap<FString, FQtPropertyInfo> AElecappliance::CollectSyncableProperty_Implementation()
+{
+	TMap<FString, FQtPropertyInfo> SuperReturn = IInteractable::CollectSyncableProperty_Implementation();
+	FQtPropertyInfo tmpPropertyInfo;
+	tmpPropertyInfo.DisplayName = "Resistance";
+	tmpPropertyInfo.Type = EQtPropertyType::QPT_Float;
+	tmpPropertyInfo.ValueStr = FString::SanitizeFloat(Resistance);
+	SuperReturn.Add("Resistance") = tmpPropertyInfo;
+	return SuperReturn;
+}
+
 TArray<FElecLinkInfo> AElecappliance::Internal_GetNextLinks(class UStaticMeshComponent* TemplatePole)
 {
 	TArray<FElecLinkInfo> NextLinks;

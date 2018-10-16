@@ -6,7 +6,7 @@
 #include "Elecappliance.h"
 #include "Battery.generated.h"
 
-enum class FCircuitType
+enum class ECircuitType
 {
 	Series,
 	Parallel
@@ -15,7 +15,13 @@ enum class FCircuitType
 struct FElecTree
 {
 	TArray<FElecTree*> Childs;
-	FCircuitType CircuitType;
+	AElecappliance* Elecappliance;
+	ECircuitType CircuitType;
+	~FElecTree()
+	{
+		for (FElecTree*& Child:Childs)
+		{delete Child;}
+	}
 };
 
 /**
@@ -30,6 +36,7 @@ class PHYSICSLABUNREAL_API ABattery : public AElecappliance
 	{
 		TArray<AElecappliance*> ElecPath;
 		int CurIndex=0;
+		int NexFlag = 0;
 		TArray<int> PinCollection;
 		void PushPin()
 		{PinCollection.Push(CurIndex);}
@@ -37,17 +44,30 @@ class PHYSICSLABUNREAL_API ABattery : public AElecappliance
 		{return PinCollection.Last();}
 		void PopPin()
 		{CurIndex = PinCollection.Pop();}
-		void Next()
-		{CurIndex++;}
-		void Prev()
-		{ CurIndex--;}
+		//Return If Curindex is out of bound
+		bool Next()
+		{
+			CurIndex++;
+			return CurIndex >= ElecPath.Num();
+		}
+
+		//Return If Curindex is out of bound
+		bool Prev()
+		{
+			CurIndex--;
+			return CurIndex < 0;
+		}
 		AElecappliance* GetCurrent()
 		{return ElecPath[CurIndex];}
+		static void GenCommonFlag(TArray<FElecPath>& ElecPaths);
 	};
 	void Internal_Electrify(FElecLinkInfo BeginSearch, TArray<FElecPath>& ElecPaths, FElecPath& SearchMap);
-	void Internal_GenElecTree();
+	void Internal_GenElecTreeSeries(TArray<FElecPath> ElecPaths,int FirstEndIndex,FElecTree* TargetTree);
+	void Internal_GenElecTreeParallel(TArray<FElecPath> ElecPaths,FElecTree* TargetTree);
 public:
 	
 	//Battery will use It own Voltage instead of the Voltage parameter
 	virtual void Electrify_Implementation(float Voltage) override;
+	UPROPERTY(VisiableAnywhere)
+		float Voltage;
 };
