@@ -104,11 +104,13 @@ void AElecappliance::OnPoleClicked(UPrimitiveComponent* TouchedComponent, FKey B
 void AElecappliance::LinkPole(class UStaticMeshComponent* InSelfActor, class UStaticMeshComponent* InOtherActor)
 {
 	LinkMap.FindOrAdd(InSelfActor).AddUnique(InOtherActor);
+	UpdateElecState();
 }
 
 void AElecappliance::BreakPole(class UStaticMeshComponent* InSelfActor, class UStaticMeshComponent* InOtherActor)
 {
 	LinkMap.FindOrAdd(InSelfActor).Remove(InOtherActor);
+	UpdateElecState();
 }
 
 TArray<class USceneComponent*> AElecappliance::DragExcludeComponent_Implementation()
@@ -131,7 +133,9 @@ FName AElecappliance::FindPoleNameByComponent(class UStaticMeshComponent* PoleCo
 
 void AElecappliance::UpdateElecState()
 {
-	
+	ABattery* Battery = FindBattery();
+	if (Battery)
+		Battery->Electrify(0);
 }
 
 TArray<FElecLinkInfo> AElecappliance::GetNextLinksStatic(class UStaticMeshComponent* TemplatePole)

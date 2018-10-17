@@ -74,6 +74,12 @@ void ADefGameModeBase::SubmitClickedElecPole(UStaticMeshComponent* ElecPole)
 		{
 			AElecappliance* ElecapplianceA, *ElecapplianceB;
 			ElecapplianceA = (AElecappliance*)this->ElecPole->GetOwner();
+			if (ElecapplianceA->GetPoleConenction(this->ElecPole).Find(ElecPole) != INDEX_NONE)
+			{
+				this->ElecPole = nullptr;
+				((UMaterialInstanceDynamic*)this->ElecPole->GetMaterial(0))->SetScalarParameterValue("Emissive", 0.f);
+				return;
+			}
 			ElecapplianceA->LinkPole(this->ElecPole, ElecPole);
 			ElecapplianceB = (AElecappliance*)ElecPole->GetOwner();
 			ElecapplianceB->LinkPole(ElecPole, this->ElecPole);

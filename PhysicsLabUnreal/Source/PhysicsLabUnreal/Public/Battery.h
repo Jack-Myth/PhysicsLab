@@ -17,11 +17,14 @@ struct FElecTree
 	TArray<FElecTree*> Childs;
 	AElecappliance* Elecappliance;
 	ECircuitType CircuitType;
+	float CResistances;
 	~FElecTree()
 	{
 		for (FElecTree*& Child:Childs)
 		{delete Child;}
 	}
+	void CaculateResistance();
+	void Electrify(float Voltage);
 };
 
 /**

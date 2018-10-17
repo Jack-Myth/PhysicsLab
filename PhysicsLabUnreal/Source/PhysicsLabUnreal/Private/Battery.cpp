@@ -86,7 +86,8 @@ void ABattery::Electrify_Implementation(float Voltage)
 	//TODO: Gen ElecTree
 	FElecTree ElecRootTree;
 	Internal_GenElecTreeSeries(ElecPaths,ElecPaths[0].ElecPath.Num(), &ElecRootTree);
-	
+	ElecRootTree.CaculateResistance();
+	ElecRootTree.Electrify(this->Voltage);
 }
 
 TMap<FString, FQtPropertyInfo> ABattery::CollectSyncableProperty_Implementation()
@@ -119,5 +120,63 @@ void ABattery::FElecPath::GenCommonFlag(TArray<FElecPath>& ElecPaths)
 	for (int i=0;i<ElecPaths.Num();i++)
 	{
 		ElecPaths[i].NexFlag = ElecPaths[i].ElecPath.Find(TargetElecappliance[0]);
+	}
+}
+
+void FElecTree::CaculateResistance()
+{
+	if (Childs.Num() == 0)
+	{
+		CResistances = Elecappliance->Resistance;
+		return;
+	}
+	float ResistanceCount = 0;
+	switch (CircuitType)
+	{
+		case ECircuitType::Series:
+			for (FElecTree*& Tree:Childs)
+			{
+				Tree->CaculateResistance();
+				ResistanceCount += Tree->CResistances;
+			}
+			CResistances = ResistanceCount;
+			break;
+		case ECircuitType::Parallel:
+			for (FElecTree*& Tree : Childs)
+			{
+				Tree->CaculateResistance();
+				ResistanceCount += 1.f/Tree->CResistances;
+			}
+			CResistances = 1.f/ResistanceCount;
+			break;
+		default:
+			break;
+	}
+}
+
+void FElecTree::Electrify(float Voltage)
+{
+	if (Childs.Num() == 0)
+	{
+		Elecappliance->Electrify(Voltage);
+		return;
+	}
+	float ResistanceCount = 0;
+	float VSplit;
+	switch (CircuitType)
+	{
+		case ECircuitType::Series:
+			for (FElecTree*& Tree : Childs)
+				ResistanceCount += Tree->CResistances;
+			VSplit = Voltage / ResistanceCount;
+			for (FElecTree*& Tree : Childs)
+				Tree->Electrify(Tree->CResistances*VSplit);
+			break;
+		case ECircuitType::Parallel:
+			for (FElecTree*& Tree : Childs)
+				Tree->Electrify(Voltage);
+			break;
+		default:
+			break;
 	}
 }
