@@ -55,6 +55,7 @@ void ADefGameModeBase::SubmitClickedElecPole(UStaticMeshComponent* ElecPole)
 		{
 			for (auto it=CableLinkedMap.CreateIterator();it;++it)
 			{
+				((UMaterialInstanceDynamic*)this->ElecPole->GetMaterial(0))->SetScalarParameterValue("Emissive", 0.f);
 				//Find two pole
 				if (it.Value().Find(this->ElecPole) != INDEX_NONE && it.Value().Find(ElecPole))
 				{
@@ -64,9 +65,9 @@ void ADefGameModeBase::SubmitClickedElecPole(UStaticMeshComponent* ElecPole)
 					ElecapplianceB = (AElecappliance*)ElecPole->GetOwner();
 					ElecapplianceB->BreakPole(ElecPole, this->ElecPole);
 					it.Key()->Destroy();
+					it.RemoveCurrent();
 					break;
 				}
-				((UMaterialInstanceDynamic*)this->ElecPole->GetMaterial(0))->SetScalarParameterValue("Emissive", 0.f);
 			}
 			this->ElecPole = nullptr;
 		}

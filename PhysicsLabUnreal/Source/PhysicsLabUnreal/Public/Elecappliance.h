@@ -31,7 +31,7 @@ class PHYSICSLABUNREAL_API AElecappliance : public ADragable, public IInteractab
 	class UMaterialInstanceDynamic* PositiveDMI;
 	class UMaterialInstanceDynamic* NegativeDMI;
 	TMap<class UStaticMeshComponent*, TArray<class UStaticMeshComponent*>> LinkMap;
-	TArray<FElecLinkInfo> Internal_GetNextLinks(class UStaticMeshComponent* TemplatePole);
+	TArray<FElecLinkInfo> Internal_GetNextLinks(class UStaticMeshComponent* TemplatePole,TArray<AElecappliance*>& SearchLink);
 	ABattery* Internal_FindBatery(const FElecLinkInfo& SearchBegin,TArray<AElecappliance*>& SearchMap);
 public:
 	AElecappliance();
@@ -51,6 +51,11 @@ public:
 		static TArray<FElecLinkInfo> GetNextLinksStatic(class UStaticMeshComponent* TemplatePole);
 	UFUNCTION(BlueprintPure)
 		TArray<FElecLinkInfo> GetNextLinks(class UStaticMeshComponent* TemplatePole);
+	UFUNCTION(BlueprintPure)
+		class UStaticMeshComponent* GetExitPole(class UStaticMeshComponent* TemplatePole)
+	{
+		return TemplatePole == PositiveP ? NegativeP : PositiveP;
+	}
 	class ABattery* FindBattery();
 	bool IsSearched = false;
 	const TArray<class UStaticMeshComponent*> GetPoleConenction(class UStaticMeshComponent* Pole)
@@ -62,9 +67,10 @@ public:
 		void Electrify(float Voltage);
 	virtual void Electrify_Implementation(float Voltage) {};
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 		float Resistance;
 	TMap<FString, FQtPropertyInfo> CollectSyncableProperty_Implementation() override;
+	virtual void OnPropertyValueChanged_Implementation(const FString& PropertyName, const FString& ValueStr) override;
 protected:
 	virtual void BeginPlay() override;
 };

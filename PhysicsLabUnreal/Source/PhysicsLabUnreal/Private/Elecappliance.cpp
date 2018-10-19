@@ -10,6 +10,7 @@
 
 ABattery* AElecappliance::FindBattery()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Green, "Begin Find Battery Logic");
 	TMap<AElecappliance*, bool> IsSearched;
 	FElecLinkInfo StartSearchInfo;
 	StartSearchInfo.Elecappliance = this;
@@ -34,19 +35,28 @@ TMap<FString, FQtPropertyInfo> AElecappliance::CollectSyncableProperty_Implement
 	return SuperReturn;
 }
 
-TArray<FElecLinkInfo> AElecappliance::Internal_GetNextLinks(class UStaticMeshComponent* TemplatePole)
+void AElecappliance::OnPropertyValueChanged_Implementation(const FString& PropertyName, const FString& ValueStr)
+{
+	if (PropertyName=="Resistance")
+	{
+		Resistance = FCString::Atof(*ValueStr);
+	}
+}
+
+TArray<FElecLinkInfo> AElecappliance::Internal_GetNextLinks(class UStaticMeshComponent* TemplatePole, TArray<AElecappliance*>& SearchLink)
 {
 	TArray<FElecLinkInfo> NextLinks;
 	AElecappliance* ElecAppliance = Cast<AElecappliance>(TemplatePole->GetOwner());
 	FElecLinkInfo thisLinkInfo;
 	thisLinkInfo.Elecappliance = Cast<AElecappliance>(TemplatePole->GetOwner());
-	thisLinkInfo.ExitPole = TemplatePole;
+	thisLinkInfo.ExitPole = thisLinkInfo.Elecappliance->GetExitPole(TemplatePole);
 	NextLinks.Add(thisLinkInfo);
 	const TArray<UStaticMeshComponent*> Connections = thisLinkInfo.Elecappliance->GetPoleConenction(TemplatePole);
+	SearchLink.Add(this);
 	for (UStaticMeshComponent*const& NextPole:Connections)
 	{
-		if (NextPole->GetOwner()!=thisLinkInfo.Elecappliance)
-			NextLinks.Append(Internal_GetNextLinks(NextPole));
+		if (SearchLink.Find((AElecappliance*)NextPole->GetOwner())==INDEX_NONE)
+			NextLinks.Append(Internal_GetNextLinks(NextPole,SearchLink));
 	}
 	return NextLinks;
 }
@@ -59,7 +69,7 @@ ABattery* AElecappliance::Internal_FindBatery(const FElecLinkInfo& SearchBegin, 
 		const TArray<UStaticMeshComponent*>& SearchNext = SearchBegin.Elecappliance->GetPoleConenction(SearchBegin.ExitPole);
 		for (UStaticMeshComponent* const& NextPoleComponent : SearchNext)
 		{
-			if (NextPoleComponent->GetOwner()->GetClass() == ABattery::StaticClass())
+			if (NextPoleComponent->GetOwner()->GetClass()->IsChildOf(ABattery::StaticClass()))
 				return Cast<ABattery>(NextPoleComponent->GetOwner());
 			else
 			{
@@ -150,10 +160,12 @@ TArray<FElecLinkInfo> AElecappliance::GetNextLinks(class UStaticMeshComponent* T
 {
 	TArray<FElecLinkInfo> NextLinks;
 	const TArray<UStaticMeshComponent*> Connections = GetPoleConenction(TemplatePole);
+	TArray<AElecappliance*> SearchLink;
+	SearchLink.Add(this);
 	for (UStaticMeshComponent* const& NextPole : Connections)
 	{
 		if (NextPole->GetOwner() != this)
-			NextLinks.Append(Internal_GetNextLinks(NextPole));
+			NextLinks.Append(Internal_GetNextLinks(NextPole,SearchLink));
 	}
 	return NextLinks;
 }

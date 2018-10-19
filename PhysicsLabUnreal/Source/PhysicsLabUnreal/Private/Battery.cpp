@@ -7,6 +7,7 @@ void ABattery::Internal_Electrify(FElecLinkInfo BeginSearch, TArray<FElecPath>& 
 	if (SearchMap.ElecPath.Find(BeginSearch.Elecappliance) != INDEX_NONE)
 		return;
 	SearchMap.ElecPath.Push(BeginSearch.Elecappliance);
+	BeginSearch.Elecappliance->Electrify(0);
 	TArray<FElecLinkInfo> nextLinks = BeginSearch.Elecappliance->GetNextLinks(BeginSearch.ExitPole);
 	for (FElecLinkInfo& NextLink : nextLinks)
 	{
@@ -46,11 +47,13 @@ void ABattery::Internal_GenElecTreeSeries(TArray<FElecPath> ElecPaths, int First
 		}
 		else
 		{
-			if (CurList[0]->GetClass()==ABattery::StaticClass())
+			if (CurList[0]->GetClass()->IsChildOf(ABattery::StaticClass())&&ElecPaths[0].CurIndex!=0)
 				break;
 			FElecTree* TargetT = new FElecTree();
 			TargetT->Elecappliance = CurList[0];
 			TargetTree->Childs.Add(TargetT);
+			for (int i = 0; i < ElecPaths.Num(); i++)
+				ElecPaths[i].Next();
 		}
 	}
 }
@@ -74,6 +77,8 @@ void ABattery::Internal_GenElecTreeParallel(TArray<FElecPath> ElecPaths, FElecTr
 
 void ABattery::Electrify_Implementation(float Voltage)
 {
+	Super::Electrify_Implementation(Voltage);
+	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Green, "Begin Battery Electrify Logic");
 	FElecPath SearchMap;
 	TArray<FElecPath> ElecPaths;
 	//Battery will be the first Elecappliance
@@ -85,9 +90,12 @@ void ABattery::Electrify_Implementation(float Voltage)
 	}
 	//TODO: Gen ElecTree
 	FElecTree ElecRootTree;
-	Internal_GenElecTreeSeries(ElecPaths,ElecPaths[0].ElecPath.Num(), &ElecRootTree);
-	ElecRootTree.CaculateResistance();
-	ElecRootTree.Electrify(this->Voltage);
+	if (ElecPaths.Num())
+	{
+		Internal_GenElecTreeSeries(ElecPaths, ElecPaths[0].ElecPath.Num(), &ElecRootTree);
+		ElecRootTree.CaculateResistance();
+		ElecRootTree.Electrify(this->Voltage);
+	}
 }
 
 TMap<FString, FQtPropertyInfo> ABattery::CollectSyncableProperty_Implementation()
@@ -99,6 +107,15 @@ TMap<FString, FQtPropertyInfo> ABattery::CollectSyncableProperty_Implementation(
 	tmpPropertyInfo.ValueStr = FString::SanitizeFloat(Voltage);
 	SuperReturn.Add("Voltage") = tmpPropertyInfo;
 	return SuperReturn;
+}
+
+void ABattery::OnPropertyValueChanged_Implementation(const FString& PropertyName, const FString& ValueStr)
+{
+	Super::OnPropertyValueChanged_Implementation(PropertyName, ValueStr);
+	if (PropertyName=="Voltage")
+	{
+		Voltage = FCString::Atof(*ValueStr);
+	}
 }
 
 void ABattery::FElecPath::GenCommonFlag(TArray<FElecPath>& ElecPaths)
@@ -158,7 +175,8 @@ void FElecTree::Electrify(float Voltage)
 {
 	if (Childs.Num() == 0)
 	{
-		Elecappliance->Electrify(Voltage);
+		if (!Elecappliance->GetClass()->IsChildOf(ABattery::StaticClass()))
+			Elecappliance->Electrify(Voltage);
 		return;
 	}
 	float ResistanceCount = 0;
