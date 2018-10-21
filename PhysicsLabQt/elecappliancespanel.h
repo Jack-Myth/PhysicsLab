@@ -11,9 +11,21 @@ class ElecappliancesPanel : public QDialog
 {
     Q_OBJECT
 
+    struct EleapplianceInfo
+    {
+        QString Name;
+        QString ImgPath;
+        QString UClassPath;
+        QString Intro;
+    };
+
+    QVector<EleapplianceInfo> EleapplianceList;
 public:
     explicit ElecappliancesPanel(QWidget *parent = 0);
     ~ElecappliancesPanel();
+
+private slots:
+    void on_listWidget_currentRowChanged(int currentRow);
 
 private:
     Ui::ElecappliancesPanel *ui;

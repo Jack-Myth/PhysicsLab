@@ -23,7 +23,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QLabel" name="label">
+  <widget class="QLabel" name="labelImg">
    <property name="geometry">
     <rect>
      <x>320</x>
@@ -36,7 +36,7 @@
     <string>ElecapplianceImage</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_2">
+  <widget class="QLabel" name="labelName">
    <property name="geometry">
     <rect>
      <x>320</x>
@@ -49,7 +49,7 @@
     <string>ElecapplianceName</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_3">
+  <widget class="QLabel" name="labelIntro">
    <property name="geometry">
     <rect>
      <x>320</x>
@@ -64,8 +64,14 @@
    <property name="alignment">
     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
    </property>
+   <property name="wordWrap">
+    <bool>true</bool>
+   </property>
   </widget>
   <widget class="QPushButton" name="pushButton">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>320</x>

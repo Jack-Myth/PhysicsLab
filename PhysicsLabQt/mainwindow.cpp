@@ -1,3 +1,4 @@
+#include "elecappliancespanel.h"
 #include "mainwindow.h"
 #include "splash.h"
 #include "ui_mainwindow.h"
@@ -16,6 +17,7 @@
     __JsonO.setObject(OBJECT);\
     UnrealCommunicatorHelper::SendJson(UnrealCommunicator,__JsonO.toJson().data(),__JsonO.toBinaryData().length());
 
+MainWindow* MainWindow::pInstance;
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -28,6 +30,13 @@ MainWindow::MainWindow(QWidget *parent) :
     UnrealCommunicatorServer.listen(QHostAddress::Any,10703);
     ui->UnrealFrame->setAttribute(Qt::WA_NativeWindow);
     connect(&UnrealCommunicatorServer,&QTcpServer::newConnection,this,&MainWindow::OnUnrealConnected,Qt::UniqueConnection);
+
+    //Build Menu
+    connect(ui->action_ElecAppliances,&QAction::triggered,this,[=](bool checked)
+    {
+        ElecappliancesPanel* EP=new ElecappliancesPanel(nullptr);
+        EP->show();
+    });
 }
 
 MainWindow::~MainWindow()
