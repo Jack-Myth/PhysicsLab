@@ -26,51 +26,51 @@ void ABattery::Internal_Electrify(FElecLinkInfo BeginSearch, TArray<FElecPath>& 
 	SearchMap.ElecPath.Pop();
 }
 
-void ABattery::Internal_GenElecTreeSeries(TArray<FElecPath> ElecPaths, int FirstEndIndex, FElecTree* TargetTree)
+void ABattery::Internal_GenElecTreeSeries(TArray<FElecPath*> ElecPaths, int FirstEndIndex, FElecTree* TargetTree)
 {
 	TargetTree->CircuitType = ECircuitType::Series;
 	while (true)
 	{
 		TArray<AElecappliance*> CurList;
-		if (ElecPaths[0].CurIndex>=FirstEndIndex)
+		if (ElecPaths[0]->CurIndex>=FirstEndIndex)
 			break;
 		for (int i=0;i<ElecPaths.Num();i++)
 		{
-			CurList.AddUnique(ElecPaths[i].GetCurrent());
+			CurList.AddUnique(ElecPaths[i]->GetCurrent());
 		}
 		if (CurList.Num()>1)
 		{
 			FElecTree* TargetT = new FElecTree();
 			Internal_GenElecTreeParallel(ElecPaths, TargetT);
-			TargetTree = TargetT;
+			//TargetTree = TargetT;
 			TargetTree->Childs.Add(TargetT);
 		}
 		else
 		{
-			if (CurList[0]->GetClass()->IsChildOf(ABattery::StaticClass())&&ElecPaths[0].CurIndex!=0)
+			if (CurList[0]->GetClass()->IsChildOf(ABattery::StaticClass())&&ElecPaths[0]->CurIndex!=0)
 				break;
 			FElecTree* TargetT = new FElecTree();
 			TargetT->Elecappliance = CurList[0];
 			TargetTree->Childs.Add(TargetT);
 			for (int i = 0; i < ElecPaths.Num(); i++)
-				ElecPaths[i].Next();
+				ElecPaths[i]->Next();
 		}
 	}
 }
 
-void ABattery::Internal_GenElecTreeParallel(TArray<FElecPath> ElecPaths, FElecTree* TargetTree)
+void ABattery::Internal_GenElecTreeParallel(TArray<FElecPath*> ElecPaths, FElecTree* TargetTree)
 {
-	TMap<AElecappliance*, TArray<FElecPath>> ElecPathMap;
+	TMap<AElecappliance*, TArray<FElecPath*>> ElecPathMap;
 	TargetTree->CircuitType = ECircuitType::Parallel;
+	FElecPath::GenCommonFlag(ElecPaths);
 	for (int i=0;i<ElecPaths.Num();i++)
 	{
-		ElecPathMap.FindOrAdd(ElecPaths[i].GetCurrent()).Add(ElecPaths[i]);
+		ElecPathMap.FindOrAdd(ElecPaths[i]->GetCurrent()).Add(ElecPaths[i]);
 	}
-	FElecPath::GenCommonFlag(ElecPaths);
 	for (auto it=ElecPathMap.CreateIterator();it;++it)
 	{
 		FElecTree* tmpElecTree = new FElecTree();
-		Internal_GenElecTreeSeries(it->Value, it->Value[0].NexFlag, tmpElecTree);
+		Internal_GenElecTreeSeries(it->Value, it->Value[0]->NexFlag, tmpElecTree);
 		TargetTree->Childs.Add(tmpElecTree);
 	}
 }
@@ -90,9 +90,12 @@ void ABattery::Electrify_Implementation(float Voltage)
 	}
 	//TODO: Gen ElecTree
 	FElecTree ElecRootTree;
+	TArray<FElecPath*> Ptr2ElecPaths;
+	for (auto it=ElecPaths.CreateIterator();it;++it)
+		Ptr2ElecPaths.Add(&(*it));
 	if (ElecPaths.Num())
 	{
-		Internal_GenElecTreeSeries(ElecPaths, ElecPaths[0].ElecPath.Num(), &ElecRootTree);
+		Internal_GenElecTreeSeries(Ptr2ElecPaths, ElecPaths[0].ElecPath.Num(), &ElecRootTree);
 		ElecRootTree.CaculateResistance();
 		ElecRootTree.Electrify(this->Voltage);
 	}
@@ -118,25 +121,34 @@ void ABattery::OnPropertyValueChanged_Implementation(const FString& PropertyName
 	}
 }
 
-void ABattery::FElecPath::GenCommonFlag(TArray<FElecPath>& ElecPaths)
+void ABattery::FElecPath::GenCommonFlag(TArray<FElecPath*>& ElecPaths)
 {
 	TArray<AElecappliance*> TargetElecappliance;
-	TargetElecappliance.Append(ElecPaths[0].ElecPath.GetData(),ElecPaths[0].ElecPath.Num()-ElecPaths[0].CurIndex);
+	TargetElecappliance.Append(ElecPaths[0]->ElecPath.GetData(),ElecPaths[0]->ElecPath.Num()-ElecPaths[0]->CurIndex);
 	for (int i=1;i<ElecPaths.Num();i++)
 	{
 		TArray<AElecappliance*> tmpElecapplicance;
-		ElecPaths[i].PushPin();
-		while (!ElecPaths[i].Next())
+		ElecPaths[i]->PushPin();
+		while (!ElecPaths[i]->Next())
 		{
-			if (TargetElecappliance.Find(ElecPaths[i].GetCurrent()) != INDEX_NONE)
-				tmpElecapplicance.Add(ElecPaths[i].GetCurrent());
+			if (TargetElecappliance.Find(ElecPaths[i]->GetCurrent()) != INDEX_NONE)
+				tmpElecapplicance.Add(ElecPaths[i]->GetCurrent());
 		}
 		TargetElecappliance = tmpElecapplicance;
-		ElecPaths[i].PopPin();
+		ElecPaths[i]->PopPin();
 	}
 	for (int i=0;i<ElecPaths.Num();i++)
 	{
-		ElecPaths[i].NexFlag = ElecPaths[i].ElecPath.Find(TargetElecappliance[0]);
+		ElecPaths[i]->PushPin();
+		while (!ElecPaths[i]->Next())
+		{
+			if (ElecPaths[i]->GetCurrent() == TargetElecappliance[0])
+			{
+				ElecPaths[i]->NexFlag = ElecPaths[i]->CurIndex;
+				break;
+			}
+		}
+		ElecPaths[i]->PopPin();
 	}
 }
 

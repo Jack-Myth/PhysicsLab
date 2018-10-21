@@ -52,7 +52,7 @@ TArray<FElecLinkInfo> AElecappliance::Internal_GetNextLinks(class UStaticMeshCom
 	thisLinkInfo.ExitPole = thisLinkInfo.Elecappliance->GetExitPole(TemplatePole);
 	NextLinks.Add(thisLinkInfo);
 	const TArray<UStaticMeshComponent*> Connections = thisLinkInfo.Elecappliance->GetPoleConenction(TemplatePole);
-	SearchLink.Add(this);
+	SearchLink.Add(thisLinkInfo.Elecappliance);
 	for (UStaticMeshComponent*const& NextPole:Connections)
 	{
 		if (SearchLink.Find((AElecappliance*)NextPole->GetOwner())==INDEX_NONE)

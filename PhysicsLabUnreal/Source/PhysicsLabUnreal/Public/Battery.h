@@ -62,11 +62,11 @@ class PHYSICSLABUNREAL_API ABattery : public AElecappliance
 		}
 		AElecappliance* GetCurrent()
 		{return ElecPath[CurIndex];}
-		static void GenCommonFlag(TArray<FElecPath>& ElecPaths);
+		static void GenCommonFlag(TArray<FElecPath*>& ElecPaths);
 	};
 	void Internal_Electrify(FElecLinkInfo BeginSearch, TArray<FElecPath>& ElecPaths, FElecPath& SearchMap);
-	void Internal_GenElecTreeSeries(TArray<FElecPath> ElecPaths,int FirstEndIndex,FElecTree* TargetTree);
-	void Internal_GenElecTreeParallel(TArray<FElecPath> ElecPaths,FElecTree* TargetTree);
+	void Internal_GenElecTreeSeries(TArray<FElecPath*> ElecPaths,int FirstEndIndex,FElecTree* TargetTree);
+	void Internal_GenElecTreeParallel(TArray<FElecPath*> ElecPaths,FElecTree* TargetTree);
 public:
 	
 	//Battery will use It own Voltage instead of the Voltage parameter
