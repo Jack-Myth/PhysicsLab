@@ -6,6 +6,7 @@
 
 QT       += core gui
 QT+= network
+QT+= charts
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -28,15 +29,21 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     splash.cpp \
-    unrealcommunicatorhelper.cpp
+    unrealcommunicatorhelper.cpp \
+    charts.cpp \
+    elecappliancespanel.cpp
 
 HEADERS += \
         mainwindow.h \
     splash.h \
-    unrealcommunicatorhelper.h
+    unrealcommunicatorhelper.h \
+    charts.h \
+    elecappliancespanel.h
 
 FORMS += \
         mainwindow.ui \
-    splash.ui
+    splash.ui \
+    charts.ui \
+    elecappliancespanel.ui
 
 LIBS += -luser32

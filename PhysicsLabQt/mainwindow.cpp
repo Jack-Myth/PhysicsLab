@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    pInstance=this;
     Splash::self=new Splash();
     Splash::self->show();
     CachedMessage.CachedMessageTargetSize=0;

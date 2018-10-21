@@ -24,6 +24,7 @@ class MainWindow : public QMainWindow
     CachedMessageInfo CachedMessage;
     HWND UnrealHwnd;
 public:
+    static MainWindow* pInstance=nullptr;
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
