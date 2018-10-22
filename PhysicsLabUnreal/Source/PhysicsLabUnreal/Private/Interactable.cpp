@@ -16,7 +16,8 @@ void IInteractable::OnActorSelected_Implementation(UObject* ObjBasePtr, AQtCommu
 	TArray<UActorComponent*> StaticMeshComponents = Cast<AActor>(ObjBasePtr)->GetComponentsByClass(UStaticMeshComponent::StaticClass());
 	for (UActorComponent*& StaticMeshComponent:StaticMeshComponents)
 	{
-		((UStaticMeshComponent*)StaticMeshComponent)->bRenderCustomDepth = true;
+
+		((UStaticMeshComponent*)StaticMeshComponent)->SetRenderCustomDepth(true);
 	}
 }
 
@@ -25,6 +26,6 @@ void IInteractable::OnActorDeselected_Implementation(UObject* ObjBasePtr, AQtCom
 	TArray<UActorComponent*> StaticMeshComponents = Cast<AActor>(ObjBasePtr)->GetComponentsByClass(UStaticMeshComponent::StaticClass());
 	for (UActorComponent*& StaticMeshComponent : StaticMeshComponents)
 	{
-		((UStaticMeshComponent*)StaticMeshComponent)->bRenderCustomDepth = false;
+		((UStaticMeshComponent*)StaticMeshComponent)->SetRenderCustomDepth(false);
 	}
 }

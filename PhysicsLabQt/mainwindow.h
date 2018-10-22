@@ -27,6 +27,7 @@ public:
     static MainWindow* pInstance;
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    void RequestSpawnActor(QString UClassPath);
 
 private:
     Ui::MainWindow *ui;

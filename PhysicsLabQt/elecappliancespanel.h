@@ -27,6 +27,8 @@ public:
 private slots:
     void on_listWidget_currentRowChanged(int currentRow);
 
+    void on_pushButton_clicked();
+
 private:
     Ui::ElecappliancesPanel *ui;
 };

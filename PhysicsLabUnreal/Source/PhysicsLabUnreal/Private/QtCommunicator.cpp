@@ -18,6 +18,7 @@
 #include <stack>
 #include "EngineUtils.h"
 #include "Interactable.h"
+#include "Particles/ParticleSystem.h"
 
 WNDPROC AQtCommunicator::OriginalWndProc;
 
@@ -204,6 +205,24 @@ void AQtCommunicator::SendActorDetail()
 		FString Value = TargetMsg->GetStringField("Value");
 		if (SelectedActor)
 			IInteractable::Execute_OnPropertyValueChanged(SelectedActor, PropertyName, Value);
+	}
+}
+
+void AQtCommunicator::SpawnBPClass()
+{
+	FString UClassPath = TargetMsg->GetStringField("UClassPath");
+	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Green, UClassPath);
+	UClass* TargetClass = LoadClass<AActor>(nullptr, *UClassPath);
+	if (TargetClass)
+	{
+		TArray<AActor*> SpawnPointCollection;
+		UGameplayStatics::GetAllActorsWithTag(GetWorld(), "SpawnPoint", SpawnPointCollection);
+		if (SpawnPointCollection.Num())
+		{
+			AActor* TargetActor = GetWorld()->SpawnActor<AActor>(TargetClass,SpawnPointCollection[0]->GetActorLocation(),FRotator::ZeroRotator);
+			UParticleSystem* SpawnEffect= LoadObject<UParticleSystem>(nullptr, TEXT("ParticleSystem'/Game/PhysicsLab/Particles/SpawnEffect.SpawnEffect'"));
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SpawnEffect, SpawnPointCollection[0]->GetActorLocation() + FVector(0, 0, 5), FRotator::ZeroRotator, false);
+		}
 	}
 }
 

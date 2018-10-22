@@ -6,6 +6,7 @@
 #include <QDoubleSpinBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QProcess>
 #include <QStandardItemModel>
 #include <QTextEdit>
 #include <QtNetwork>
@@ -23,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    //setAttribute(Qt::WA_DeleteOnClose);
     pInstance=this;
     Splash::self=new Splash();
     Splash::self->show();
@@ -37,11 +39,26 @@ MainWindow::MainWindow(QWidget *parent) :
         ElecappliancesPanel* EP=new ElecappliancesPanel(nullptr);
         EP->show();
     });
+#ifdef QT_NO_DEBUG
+    QStringList ArgList;
+    ArgList.push_back("-ResX=1");
+    ArgList.push_back("-ResY=1");
+    ArgList.push_back("-WINDOWED");
+    QProcess::startDetached("./PhysicsLabUnreal/Binaries/Win64/PhysicsLabUnreal-Win64-Shipping.exe",ArgList);
+#endif
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::RequestSpawnActor(QString UClassPath)
+{
+    INIT_JSON_MSG(JsonO);
+    JsonO.insert("Action","SpawnBPClass");
+    JsonO.insert("UClassPath",UClassPath);
+    SEND_JSON_MSG(JsonO);
 }
 
 void MainWindow::OnUnrealConnected()
@@ -134,7 +151,7 @@ void MainWindow::SendHwnd()
 
 void MainWindow::SyncScene()
 {
-    //ui->SceneTree->clear();
+    ui->SceneTree->clear();
     QJsonArray ActorList = TargetMsg->object().find("ActorList").value().toArray();
     QList<QTreeWidgetItem*> WidgetItemList;
     for(QJsonValueRef JsV:ActorList)
@@ -172,6 +189,7 @@ void MainWindow::SyncActorDetails()
         if(PropertyType=="Float")
         {
             QDoubleSpinBox* PropertyValue=new QDoubleSpinBox();
+            PropertyValue->setMaximum(9999999999);
             PropertyValue->setValue(PropertyObject.find("Value").value().toDouble());
             void (QDoubleSpinBox::*pf)(double)=&QDoubleSpinBox::valueChanged;
             connect(PropertyValue,pf,this,[=](double Value)

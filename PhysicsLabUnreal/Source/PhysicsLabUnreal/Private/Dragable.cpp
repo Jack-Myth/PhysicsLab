@@ -2,6 +2,8 @@
 
 #include "Dragable.h"
 #include "Kismet/GameplayStatics.h"
+#include "DefGameModeBase.h"
+#include "QtCommunicator.h"
 
 
 // Sets default values
@@ -16,7 +18,7 @@ ADragable::ADragable()
 void ADragable::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	ADefGameModeBase::GetQtCommunicator(this)->SyncSceneToQt();
 }
 
 // Called every frame

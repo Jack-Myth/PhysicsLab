@@ -1,4 +1,5 @@
 #include "elecappliancespanel.h"
+#include "mainwindow.h"
 #include "ui_elecappliancespanel.h"
 
 #include <QSettings>
@@ -51,5 +52,14 @@ void ElecappliancesPanel::on_listWidget_currentRowChanged(int currentRow)
     else
     {
         ui->pushButton->setEnabled(false);
+    }
+}
+
+void ElecappliancesPanel::on_pushButton_clicked()
+{
+    if(ui->listWidget->currentRow()>=0)
+    {
+        QString Path =EleapplianceList[ui->listWidget->currentRow()].UClassPath;
+        MainWindow::pInstance->RequestSpawnActor(Path);
     }
 }

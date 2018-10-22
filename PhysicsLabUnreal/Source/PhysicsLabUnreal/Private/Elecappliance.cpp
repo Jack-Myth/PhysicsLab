@@ -43,6 +43,13 @@ void AElecappliance::OnPropertyValueChanged_Implementation(const FString& Proper
 	}
 }
 
+void AElecappliance::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	Cast<ADefGameModeBase>(UGameplayStatics::GetGameMode(this))->BreakAllLinkToPole(PositiveP);
+	Cast<ADefGameModeBase>(UGameplayStatics::GetGameMode(this))->BreakAllLinkToPole(NegativeP);
+}
+
 TArray<FElecLinkInfo> AElecappliance::Internal_GetNextLinks(class UStaticMeshComponent* TemplatePole, TArray<AElecappliance*>& SearchLink)
 {
 	TArray<FElecLinkInfo> NextLinks;

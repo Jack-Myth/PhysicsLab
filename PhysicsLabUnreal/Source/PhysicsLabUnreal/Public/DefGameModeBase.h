@@ -25,4 +25,5 @@ public:
 	static class AQtCommunicator* GetQtCommunicator(AActor* ContextActor);
 
 	void SubmitClickedElecPole(class UStaticMeshComponent* ElecPole);
+	void BreakAllLinkToPole(class UStaticMeshComponent* ElecPole);
 };

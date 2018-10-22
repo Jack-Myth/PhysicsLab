@@ -54,4 +54,6 @@ public:
 		void RequestRefresh();
 	UFUNCTION()
 		void SendActorDetail();
+	UFUNCTION()
+		void SpawnBPClass();
 };

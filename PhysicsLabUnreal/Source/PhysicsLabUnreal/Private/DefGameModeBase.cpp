@@ -97,3 +97,21 @@ void ADefGameModeBase::SubmitClickedElecPole(UStaticMeshComponent* ElecPole)
 		}
 	}
 }
+
+void ADefGameModeBase::BreakAllLinkToPole(class UStaticMeshComponent* ElecPole)
+{
+	for (auto it = CableLinkedMap.CreateIterator(); it; ++it)
+	{
+		//Find two pole
+		if (it.Value().Find(ElecPole) != INDEX_NONE)
+		{
+			AElecappliance* ElecapplianceA, *ElecapplianceB;
+			ElecapplianceA = (AElecappliance*)it.Value()[0]->GetOwner();
+			ElecapplianceA->BreakPole(this->ElecPole, ElecPole);
+			ElecapplianceB = (AElecappliance*)it.Value()[1]->GetOwner();
+			ElecapplianceB->BreakPole(ElecPole, this->ElecPole);
+			it.Key()->Destroy();
+			it.RemoveCurrent();
+		}
+	}
+}

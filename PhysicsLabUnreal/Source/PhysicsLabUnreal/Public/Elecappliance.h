@@ -71,6 +71,9 @@ public:
 		float Resistance;
 	TMap<FString, FQtPropertyInfo> CollectSyncableProperty_Implementation() override;
 	virtual void OnPropertyValueChanged_Implementation(const FString& PropertyName, const FString& ValueStr) override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 protected:
 	virtual void BeginPlay() override;
 };

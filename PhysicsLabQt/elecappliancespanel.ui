@@ -35,6 +35,9 @@
    <property name="text">
     <string>ElecapplianceImage</string>
    </property>
+   <property name="scaledContents">
+    <bool>true</bool>
+   </property>
   </widget>
   <widget class="QLabel" name="labelName">
    <property name="geometry">
