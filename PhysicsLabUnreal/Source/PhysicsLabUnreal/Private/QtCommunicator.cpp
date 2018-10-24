@@ -126,6 +126,21 @@ void AQtCommunicator::SyncActorDetails(AActor* TargetActor)
 	SendJson(ActorDetailJson);
 }
 
+void AQtCommunicator::SendDataPoint(float Value)
+{
+	FJsonObject newJson;
+	newJson.SetStringField("Action", "SendDataPoint");
+	newJson.SetNumberField("Value", Value);
+	SendJson(newJson);
+}
+
+void AQtCommunicator::ClearDataPoint()
+{
+	FJsonObject newJson;
+	newJson.SetStringField("Action", "ClearDataPoints");
+	SendJson(newJson);
+}
+
 void AQtCommunicator::SendMsg(const TArray<char>& Data)
 {
 	int DataSize=Data.Num();

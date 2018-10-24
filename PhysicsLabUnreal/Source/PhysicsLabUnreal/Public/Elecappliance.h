@@ -33,7 +33,12 @@ class PHYSICSLABUNREAL_API AElecappliance : public ADragable, public IInteractab
 	TMap<class UStaticMeshComponent*, TArray<class UStaticMeshComponent*>> LinkMap;
 	TArray<FElecLinkInfo> Internal_GetNextLinks(class UStaticMeshComponent* TemplatePole,TArray<AElecappliance*>& SearchLink);
 	ABattery* Internal_FindBatery(const FElecLinkInfo& SearchBegin,TArray<AElecappliance*>& SearchMap);
+	float TimeCount = 0;
 public:
+	UPROPERTY(BlueprintReadOnly)
+		bool bIsSelected = false;
+	UPROPERTY(BlueprintReadWrite)
+		float DataValue;
 	AElecappliance();
 	UPROPERTY(EditAnywhere, AdvancedDisplay)
 		class UStaticMeshComponent* PositiveP;
@@ -73,6 +78,9 @@ public:
 	virtual void OnPropertyValueChanged_Implementation(const FString& PropertyName, const FString& ValueStr) override;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+
+	virtual void Tick(float DeltaTime) override;
 
 protected:
 	virtual void BeginPlay() override;

@@ -40,6 +40,10 @@ public:
 		void SyncSceneToQt();
 	UFUNCTION(BlueprintCallable)
 		void SyncActorDetails(AActor* TargetActor);
+	UFUNCTION(BlueprintCallable)
+		void SendDataPoint(float Value);
+	UFUNCTION(BlueprintCallable)
+		void ClearDataPoint();
 	void SendMsg(const TArray<char>& Data);
 	void SendJson(const FJsonObject& JsonToSend);
 

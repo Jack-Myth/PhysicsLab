@@ -41,6 +41,8 @@ private:
     Q_INVOKABLE void SendHwnd();
     Q_INVOKABLE void SyncScene();
     Q_INVOKABLE void SyncActorDetails();
+    Q_INVOKABLE void SendDataPoint();
+    Q_INVOKABLE void ClearDataPoints();
     class QTreeWidgetItem* Internal_SyncScene(QJsonObject ChildActor);
 
     // QWidget interface

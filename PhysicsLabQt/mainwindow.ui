@@ -111,6 +111,7 @@
      <string>视图</string>
     </property>
     <addaction name="action_ElecAppliances"/>
+    <addaction name="action_Charts"/>
    </widget>
    <widget class="QMenu" name="menu_4">
     <property name="title">
@@ -180,6 +181,11 @@
   <action name="action_ElecAppliances">
    <property name="text">
     <string>电路元件</string>
+   </property>
+  </action>
+  <action name="action_Charts">
+   <property name="text">
+    <string>可视化图表</string>
    </property>
   </action>
  </widget>

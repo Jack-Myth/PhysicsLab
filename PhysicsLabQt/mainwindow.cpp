@@ -1,3 +1,4 @@
+#include "charts.h"
 #include "elecappliancespanel.h"
 #include "mainwindow.h"
 #include "splash.h"
@@ -38,6 +39,10 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         ElecappliancesPanel* EP=new ElecappliancesPanel(nullptr);
         EP->show();
+    });
+    connect(ui->action_Charts,&QAction::triggered,this,[=]()
+    {
+        Charts::Show_SingleInstance();
     });
 #ifdef QT_NO_DEBUG
     QStringList ArgList;
@@ -212,6 +217,16 @@ void MainWindow::SyncActorDetails()
         x->setLayout(MainHorizontalBox);
         ui->Details->setItemWidget(PropertyListItem,x);
     }
+}
+
+void MainWindow::SendDataPoint()
+{
+    Charts::UpdateRecordPoint(TargetMsg->object().find("Value").value().toDouble());
+}
+
+void MainWindow::ClearDataPoints()
+{
+    Charts::ClearRecordPoints();
 }
 
 QTreeWidgetItem *MainWindow::Internal_SyncScene(QJsonObject ChildActor)

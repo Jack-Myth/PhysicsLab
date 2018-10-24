@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "DefGameModeBase.h"
 #include "Battery.h"
+#include "QtCommunicator.h"
 
 ABattery* AElecappliance::FindBattery()
 {
@@ -48,6 +49,18 @@ void AElecappliance::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 	Cast<ADefGameModeBase>(UGameplayStatics::GetGameMode(this))->BreakAllLinkToPole(PositiveP);
 	Cast<ADefGameModeBase>(UGameplayStatics::GetGameMode(this))->BreakAllLinkToPole(NegativeP);
+}
+
+void AElecappliance::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	TimeCount += DeltaTime;
+	if (TimeCount >0.1)
+	{
+		if (bIsSelected)
+			ADefGameModeBase::GetQtCommunicator(this)->SendDataPoint(DataValue);
+		TimeCount = 0;
+	}
 }
 
 TArray<FElecLinkInfo> AElecappliance::Internal_GetNextLinks(class UStaticMeshComponent* TemplatePole, TArray<AElecappliance*>& SearchLink)
